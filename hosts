@@ -1,0 +1,20 @@
+node1 ansible_host=kag1 ansible_user=root primary=true
+node2 ansible_host=kag2 ansible_user=root secondary=true
+node3 ansible_host=kag3 ansible_user=root secondary=true
+
+[worker]
+node2
+node3
+
+[master]
+node1
+
+[cluster:children]
+worker
+master
+
+[all:vars]
+ansible_python_interpreter=/usr/bin/python3
+ansible_ssh_extra_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+ansible_ssh_private_key_file=~/.ssh/id_rsa
+ansible_user=root

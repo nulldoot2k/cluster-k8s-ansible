@@ -1,0 +1,19 @@
+---
+
+- name: ensure common
+  tags: [ common ]
+  hosts: [ cluster ] 
+  become: true
+  roles: [ common ]
+
+- name: ensure docker
+  tags: ['docker']
+  hosts: [cluster]
+  become: true
+  roles: [ docker ]
+
+- name: ensure k8s
+  tags: ['k8s']
+  hosts: [cluster]
+  become: true
+  roles: [ kubernetes ]
