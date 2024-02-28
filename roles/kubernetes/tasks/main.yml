@@ -8,3 +8,7 @@
 
 - name: Join Worker
   include_tasks: worker.yml
+
+- name: Uninstall Cluster
+  tags: [uninstall-cluster]
+  include_tasks: uninstall.yml

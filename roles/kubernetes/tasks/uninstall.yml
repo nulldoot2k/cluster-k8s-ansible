@@ -1,0 +1,85 @@
+---
+- name: Reset kubeadm
+  shell: kubeadm reset
+  ignore_errors: yes
+
+- name: Remove Kubernetes related packages
+  apt:
+    name: "{{ item }}"
+    state: absent
+  with_items:
+    - kubeadm
+    - kubectl
+    - kubelet
+    - kubernetes-cni 
+    - kube*
+  ignore_errors: yes
+
+- name: Remove Docker containers/images
+  shell: |
+    docker image prune -a
+    systemctl restart docker
+  ignore_errors: yes
+
+- name: Remove Docker packages
+  apt:
+    name: "{{ item }}"
+    state: absent
+    allow_change_held_packages: yes
+  with_items:
+    - docker-engine
+    - docker
+    - docker.io
+    - docker-ce
+    - docker-ce-cli
+    - containerd
+    - containerd.io
+    - runc
+  ignore_errors: yes
+
+- name: Remove parts
+  apt:
+    autoremove: yes
+  ignore_errors: yes
+
+- name: Remove Kubernetes, etcd, and Docker folders
+  file:
+    path: "{{ item }}"
+    state: absent
+    recurse: yes
+  with_items:
+    - "~/.kube"
+    - "/etc/cni"
+    - "/etc/kubernetes"
+    - "/var/lib/dockershim"
+    - "/var/lib/etcd"
+    - "/var/lib/kubelet"
+    - "/var/lib/etcd2/"
+    - "/var/run/kubernetes"
+    - "~/.kube/*"
+    - "/var/lib/docker"
+    - "/etc/docker"
+    - "/var/run/docker.sock"
+  ignore_errors: yes
+
+- name: Remove Docker group (optional)
+  group:
+    name: docker
+    state: absent
+  ignore_errors: yes
+
+- name: Clear iptables
+  command: iptables -F && iptables -X
+  ignore_errors: yes
+
+- name: Clear iptables NAT table
+  command: iptables -t nat -F && iptables -t nat -X
+  ignore_errors: yes
+
+- name: Clear iptables RAW table
+  command: iptables -t raw -F && iptables -t raw -X
+  ignore_errors: yes
+
+- name: Clear iptables MANGLE table
+  command: iptables -t mangle -F && iptables -t mangle -X
+  ignore_errors: yes

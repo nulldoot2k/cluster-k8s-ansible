@@ -1,17 +1,27 @@
-node1 ansible_host=192.168.101.136  primary=true
-node2 ansible_host=192.168.101.137  secondary=true
-node3 ansible_host=192.168.101.138  secondary=true
+master1     primary=true      ansible_host=10.3.54.217   
+worker1     secondary=true    ansible_host=10.3.54.37  
+worker2     secondary=true    ansible_host=10.3.54.134  
+worker3     secondary=true    ansible_host=10.3.52.77  
+storage1    secondary=true    ansible_host=10.3.55.222
+
+[nfs_server]
+storage1
 
 [worker]
-node2
-node3
+worker1
+worker2
+worker3
 
 [master]
-node1
+master1
 
 [cluster:children]
 worker
 master
+
+[nfs:children]
+nfs_server
+worker
 
 [all:vars]
 ansible_python_interpreter=/usr/bin/python3

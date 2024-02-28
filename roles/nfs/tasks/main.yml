@@ -1,0 +1,11 @@
+---
+
+- name: If nfs-server is present
+  include_tasks: nfs-server.yml
+  when: nfs_enable.server | bool or ('nfs_enable' in item and item.nfs_enable.server | bool) and inventory_hostname in groups['nfs_server']
+  loop: "{{ nfs_configurations }}"
+
+- name: If nfs-clients is present
+  include_tasks: nfs-clients.yml
+  when: nfs_enable.clients | bool or ('nfs_enable' in item and item.nfs_enable.clients | bool) and inventory_hostname in groups['worker']
+  loop: "{{ nfs_configurations }}"
