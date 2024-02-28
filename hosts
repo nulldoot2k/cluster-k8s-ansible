@@ -1,8 +1,7 @@
-master1     primary=true      ansible_host=10.3.54.217   
-worker1     secondary=true    ansible_host=10.3.54.37  
-worker2     secondary=true    ansible_host=10.3.54.134  
-worker3     secondary=true    ansible_host=10.3.52.77  
-storage1    secondary=true    ansible_host=10.3.55.222
+master1     primary=true      ansible_host=192.168.101.136
+worker1     secondary=true    ansible_host=192.168.101.137  
+worker2     secondary=true    ansible_host=192.168.101.138  
+storage1    secondary=true    ansible_host=192.168.101.139
 
 [nfs_server]
 storage1
@@ -10,7 +9,6 @@ storage1
 [worker]
 worker1
 worker2
-worker3
 
 [master]
 master1

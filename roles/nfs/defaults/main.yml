@@ -7,8 +7,7 @@ nfs_export_options: "rw,sync,no_subtree_check"
 nfs_client_mnt_point: "/data/nfs_client"
 
 firewall_allow_ips:
-  - 10.3.0.0/22
-  - 10.3.52.0/22
+  - 192.168.101.0/24
 
 nfs_client_mnt_options: 
 
