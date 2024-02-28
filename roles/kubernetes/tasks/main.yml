@@ -12,3 +12,4 @@
 - name: Uninstall Cluster
   tags: [uninstall-cluster]
   include_tasks: uninstall.yml
+  when: "'uninstall-cluster' in (tags | default([]))"

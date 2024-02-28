@@ -19,7 +19,7 @@
   roles: [kubernetes]
 
 - name: Setup NFS
-  hosts: [nfs]
+  hosts: [all]
   become: true
   roles:
     - role: nfs

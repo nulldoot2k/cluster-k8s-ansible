@@ -58,6 +58,17 @@
     daemon_reload: yes
   become: true
 
+- name: Check if NFS access rules exist
+  iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: nfs
+    source: "{{ item }}"
+    jump: ACCEPT
+    state: absent
+  register: iptables_check
+  loop: "{{ firewall_allow_ips }}"
+
 - name: Allow NFS access for specific IP range
   iptables:
     chain: INPUT
@@ -67,14 +78,14 @@
     jump: ACCEPT
   become: yes
   loop: "{{ firewall_allow_ips }}"
+  when: iptables_check.changed == false
 
-- name: Drop NFS connections from other IPs
+- name: Drop NFS access for all other IP addresses
   iptables:
     chain: INPUT
     protocol: tcp
     destination_port: nfs
     jump: DROP
-  become: yes
 
 - name: flush handlers
   meta: flush_handlers

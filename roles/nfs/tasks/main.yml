@@ -9,3 +9,7 @@
   include_tasks: nfs-clients.yml
   when: nfs_enable.clients | bool or ('nfs_enable' in item and item.nfs_enable.clients | bool) and inventory_hostname in groups['worker']
   loop: "{{ nfs_configurations }}"
+
+- name: Deploy StorageClass
+  include_tasks: storageclass.yml
+  when: inventory_hostname in groups['master']
