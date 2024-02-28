@@ -12,8 +12,8 @@
   become: true
   roles: [ docker ]
 
-- name: ensure k8s
+- name: Deploy Cluster K8s
   tags: ['k8s']
   hosts: [cluster]
   become: true
-  roles: [ kubernetes ]
+  roles: [kubernetes]

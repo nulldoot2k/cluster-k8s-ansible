@@ -1,6 +1,6 @@
-node1 ansible_host=kag1 ansible_user=root primary=true
-node2 ansible_host=kag2 ansible_user=root secondary=true
-node3 ansible_host=kag3 ansible_user=root secondary=true
+node1 ansible_host=192.168.101.136  primary=true
+node2 ansible_host=192.168.101.137  secondary=true
+node3 ansible_host=192.168.101.138  secondary=true
 
 [worker]
 node2
