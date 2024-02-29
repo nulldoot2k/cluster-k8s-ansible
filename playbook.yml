@@ -1,12 +1,5 @@
 ---
 
-# - name: Ansible-Kubernetes Repository
-#   hosts: [all]
-#   tasks:
-#     - name: Variables Defaults
-#       include_vars:
-#         file: defaults/main.yml
-
 - name: Ensure common
   tags: [ common ]
   hosts: [ cluster ] 
