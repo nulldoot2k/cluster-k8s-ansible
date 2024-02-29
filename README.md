@@ -2,6 +2,14 @@
 
 <center>Automate the provisioning of a new bare-metal multi-node Kubernetes cluster with Ansible. Uses all the industry-standard tools for an enterprise-grade cluster.</center>
 
+## Table of Contents
+
+- [Stack](#stack) 
+- [Requirements](#requirements) 
+- [Usage](#usage) 
+- [Test Nginx](#test-nginx) 
+- [Uninstall Cluster](#uninstall-cluster) 
+
 ## Stack
 
 - Ansible: An open source IT automation engine.
@@ -34,7 +42,7 @@ cd cluster-k8s-ansible
 ```
 3, Edit the values of the default variables to your requirements
 ```bash
-vi defaults/main.yaml
+vi group_vars/all
 ```
 4, Edit the Ansible inventory file to your requirements
 ```bash
@@ -45,19 +53,7 @@ vi inventory/hosts.ini
 ansible-playbook -i inventory/hosts.ini playbook.yml
 ```
 
-## Uninstall Cluster
-
-```bash
-ansible-playbook -i hosts playbook.yml --tags uninstall-cluster
-```
-
-## Deploy Nginxx
-
-```bash
-kubectl create deployment nginx --image=nginx
-```
-
-Exposing Your Nginx Service to Public Network
+## Test Nginx
 
 Kubernetes offers several options when exposing your service based on a feature called Kubernetes Service-types and they are:
 
@@ -66,13 +62,19 @@ Kubernetes offers several options when exposing your service based on a feature 
 - LoadBalancer – This option leverages on external Load-Balancing services offered by various providers to allow access to your service. This is a more reliable option when thinking about high availability for your service, and has more feature beyond default access.
 - ExternalName – This service does traffic redirect to services outside of the cluster. As such the service is thus mapped to a DNS name that could be hosted out of your cluster. It is important to note that this does not use proxying.
 
-The default Service-type is ClusterIP.
+1, Deploy Image Nginxx
+
+```bash
+kubectl create deployment nginx --image=nginx
+```
+
+2, Exposing Your Nginx Service to Public Network
 
 ```bash
 kubectl create service loadbalancer nginx --tcp=80:80
 ```
 
-Check service
+3, Check service
 
 ```bash
 kubectl get svc
@@ -80,7 +82,7 @@ NAME         TYPE           CLUSTER-IP      EXTERNAL-IP     PORT(S)        AGE
 nginx        LoadBalancer   10.96.163.143   192.168.101.1   80:31451/TCP   106s
 ```
 
-## Checking
+4, Checking result
 
 ```bash
 curl 192.168.101.1
@@ -109,3 +111,12 @@ Commercial support is available at
 </body>
 </html>
 ```
+
+## Uninstall Cluster
+
+```bash
+ansible-playbook -i hosts playbook.yml --tags uninstall-cluster
+```
+
+## Thanks for Reading!
+- Donate: Visa Viettinbank: **103868801400**
