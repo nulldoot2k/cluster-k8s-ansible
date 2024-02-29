@@ -1,62 +1,61 @@
 ---
 
-- name: Install NFS packages Server
-  apt:
-    name: nfs-kernel-server
-    state: present
+- name: "Install :: updates package server lists"
   become: true
+  apt:
+    update_cache: true
+    force_apt_get: true
 
-- name: ensure exported path exists
+- name: Install NFS packages Server
+  become: true
+  apt:
+    pkg: nfs-kernel-server
+    force_apt_get: true
+
+- name: Ensure exported path exists
   file:
-    path: "{{ item.get('nfs_export', nfs_export) }}"
+    path: "{{ nfs.nfs_export }}"
     state: directory
-    recurse: yes
     mode: '0755'
-  check_mode: no
-  become: yes
+    owner: nobody
+    group: nogroup
 
 - block:
-    - name: create filesystem on disk
+    - name: Create filesystem on disk
       filesystem:
-        fstype: "{{ item.get('nfs_fstype', nfs_fstype) }}"
-        dev: "{{ item.get('nfs_disk_location', nfs_disk_location) }}"
+        fstype: "{{ nfs.nfs_fstype }}"
+        dev: "{{ nfs.nfs_disk_location }}"
         resizefs: true
-    - name: mount filesystem
+    - name: Mount filesystem
       mount:
-        path: "{{ item.get('nfs_export', nfs_export) }}"
-        src: "{{ item.get('nfs_disk_location', nfs_disk_location) }}"
-        fstype: "{{ item.get('nfs_fstype', nfs_fstype) }}"
+        path: "{{ nfs.nfs_export }}"
+        src: "{{ nfs.nfs_disk_location }}"
+        fstype: "{{ nfs.nfs_fstype }}"
         state: mounted
-    - name: grow filesystem after mounting (xfs requires to be mounted)
+    - name: Grow filesystem after mounting (xfs requires to be mounted)
       filesystem:
-        fstype: "{{ item.get('nfs_fstype', nfs_fstype) }}"
-        dev: "{{ item.get('nfs_disk_location', nfs_disk_location) }}"
+        fstype: "{{ nfs.nfs_fstype }}"
+        dev: "{{ nfs.nfs_disk_location }}"
         resizefs: true
-  when: nfs_disk_location is not none
+  when: nfs.nfs_disk_location is not none
 
-- name: update exports file
+- name: Update exports file
   lineinfile:
     path: /etc/exports
-    regexp: "{{ item.get('nfs_export', nfs_export) }}"
-    line: "{{ item.get('nfs_export', nfs_export) }} {{ item.get('nfs_export_subnet', nfs_export_subnet) }}({{ item.get('nfs_export_options', nfs_export_options) }})"
+    regexp: "{{ nfs.nfs_export }}"
+    line: "{{ nfs.nfs_export }} {{ nfs.nfs_export_subnet }}({{ nfs.nfs_export_options }})"
   notify: re-export filesystem
 
-- name: Run exportfs -a command
-  command: exportfs -a
-  become: true
-
-- name: ensure nfs service is running
-  service:
-    name: nfs-server
-    state: started
-    enabled: yes
-
 - name: Restart nfs-kernel-server service
+  become: true
   systemd:
     name: nfs-kernel-server
-    state: restarted
+    state: started
     daemon_reload: yes
+
+- name: Run exportfs command
   become: true
+  command: exportfs -a
 
 - name: Check if NFS access rules exist
   iptables:
@@ -67,7 +66,7 @@
     jump: ACCEPT
     state: absent
   register: iptables_check
-  loop: "{{ firewall_allow_ips }}"
+  loop: "{{ nfs_storage.whitelist_ips }}"
 
 - name: Allow NFS access for specific IP range
   iptables:
@@ -77,7 +76,7 @@
     source: "{{ item }}"
     jump: ACCEPT
   become: yes
-  loop: "{{ firewall_allow_ips }}"
+  loop: "{{ nfs_storage.whitelist_ips }}"
   when: iptables_check.changed == false
 
 - name: Drop NFS access for all other IP addresses
@@ -87,5 +86,5 @@
     destination_port: nfs
     jump: DROP
 
-- name: flush handlers
+- name: Flush handlers
   meta: flush_handlers

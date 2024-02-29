@@ -1,13 +1,13 @@
 ---
 
-- name: Check if /tmp/nfs/ directory exists
+- name: "Check if {{ nfs.nfs_path_tmp }} directory exists"
   stat:
-    path: /tmp/nfs/
+    path: "{{ nfs.nfs_path_tmp }}"
   register: nfs_directory
 
-- name: Create /tmp/nfs/ directory
+- name: "Create {{ nfs.nfs_path_tmp }} directory"
   file:
-    path: /tmp/nfs/
+    path: "{{ nfs.nfs_path_tmp }}"
     state: directory
     mode: '0755'
   become: true
@@ -23,13 +23,13 @@
     - { src: 'templates/deploy.yaml.j2', dest: '/tmp/nfs/003-deploy.yaml' }
 
 - name: Check if storageclass exists
-  command: kubectl get storageclass {{ storageclass_name }}
+  command: kubectl get storageclass {{ nfs_storage.storageclass_name }}
   register: storageclass_check
   changed_when: false
   failed_when: false
 
 - name: Apply storageclass configurations
-  command: kubectl apply -f /tmp/nfs/
+  command: kubectl apply -f "{{ nfs.nfs_path_tmp }}"
   args:
     executable: /bin/bash
   become: true

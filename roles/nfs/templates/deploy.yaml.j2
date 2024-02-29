@@ -1,37 +1,37 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nfs-client-provisioner
+  name: "{{ nfs_storage.deployment_name }}"
   labels:
-    app: nfs-client-provisioner
+    app: "{{ nfs_storage.deployment_name }}"
 spec:
   replicas: 1
   strategy:
     type: Recreate
   selector:
     matchLabels:
-      app: nfs-client-provisioner
+      app: "{{ nfs_storage.deployment_name }}"
   template:
     metadata:
       labels:
-        app: nfs-client-provisioner
+        app: "{{ nfs_storage.deployment_name }}"
     spec:
-      serviceAccountName: nfs-client-provisioner
+      serviceAccountName: "{{ nfs_storage.deployment_name }}"
       containers:
-        - name: nfs-client-provisioner
+        - name: "{{ nfs_storage.deployment_name }}"
           image: registry.k8s.io/sig-storage/nfs-subdir-external-provisioner:v4.0.2
           volumeMounts:
             - name: nfs-client-root
               mountPath: /persistentvolumes
           env:
             - name: PROVISIONER_NAME
-              value: k8s-sigs.io/nfs-subdir-external-provisioner
+              value: "{{ nfs_storage.provisioner }}"
             - name: NFS_SERVER
               value: "{{ hostvars[groups['nfs_server'][0]]['ansible_host'] }}"
             - name: NFS_PATH
-              value: "{{ nfs_export }}"
+              value: "{{ nfs.nfs_export }}"
       volumes:
         - name: nfs-client-root
           nfs:
             server: "{{ hostvars[groups['nfs_server'][0]]['ansible_host'] }}"
-            path: "{{ nfs_export }}"
+            path: "{{ nfs.nfs_export }}"

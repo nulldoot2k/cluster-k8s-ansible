@@ -1,19 +1,20 @@
 ---
-nfs_fstype: "ext4" # df -T / --> to check
-nfs_disk_location:
-nfs_export: "/data/nfs_server"
-nfs_export_subnet: "*"
-nfs_export_options: "rw,sync,no_subtree_check"
-nfs_client_mnt_point: "/data/nfs_client"
-
-firewall_allow_ips:
-  - 192.168.101.0/24
-
-storageclass_name: managed-nfs-storage
-
-nfs_client_mnt_options: 
-
-nfs_client_mnt_state: mounted
+nfs:
+  nfs_fstype: ""
+  nfs_export: ""
+  nfs_path_tmp: "" 
+  nfs_disk_location:
+  nfs_export_subnet: ""
+  nfs_export_options: ""
+  nfs_client_mnt_point: ""
+  nfs_client_mnt_options: 
+  nfs_client_mnt_state: mounted
+nfs_storage:
+  whitelist_ips: 
+  archive_delete: ""
+  storageclass_name: 
+  deployment_name:
+  provisioner: 
 
 nfs_enable:
   server: true

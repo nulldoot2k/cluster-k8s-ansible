@@ -18,10 +18,7 @@
   shell: /usr/bin/containerd config default > /etc/containerd/config.toml
 
 - name: configuring the systemd cgroup driver for Containerd
-  lineinfile:
-    path: /etc/containerd/config.toml
-    regexp: 'SystemdCgroup = false'
-    line: 'SystemdCgroup = true'
+  shell: sudo sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
 
 - name: enable the Containerd service and start it
   systemd:

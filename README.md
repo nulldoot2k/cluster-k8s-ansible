@@ -1,57 +1,54 @@
-## Devploy Cluster K8s Ez
+# <center> Ansible-Kubernetes Repository </center>
 
-Change Info file hosts
+<center>Automate the provisioning of a new bare-metal multi-node Kubernetes cluster with Ansible. Uses all the industry-standard tools for an enterprise-grade cluster.</center>
 
-> Require ssh with role **`root`**
+## Stack
 
-- ansible_host=`<host_IP>`
-- For master set: `primary`=**true**
-- For worker set: `secondary`=**true**
-- groups for master: `[master]`
-- groups for worker: `[worker]`
-- groups for cluster: `[cluster]`
+- Ansible: An open source IT automation engine.
+- ContainerD: An industry-standard container runtime.
+- Kubernetes: An open-source system for automating deployment, scaling, and management of containerized applications.
+- Plannel: An open source networking and network security solution for containers (CNI).
+- MetalLB: A bare metal load-balancer for Kubernetes.
+- Nginx: An Ingress controller.
 
-Install lib
+## Requirements
 
-```bash
-pip install kubernetes
+1. A Linux machine with a superuser privileges and pre-installed Ansible.
+2. Ubuntu machines that are intended to become part of the new Kubernetes cluster. 
+
+Make sure that your SSH key is already installed on the machines by running the following command:
+
+```sh
+ssh-copy-id <The remote username>@<The IPv4 address of the remote machine>
 ```
 
-Change Info NFS storage
+## Usage
 
-- firewall_allow_ips: Allows IP or Range to Client connect to Server | Require
-- nfs_fstype is the type of filesystem to create on the disk. Checking with **`df -T /`**
-- nfs_export is the path to exported filesystem mountpoint on the NFS server.
-- nfs_export_subnet is the host or network to which the export is shared. Optional, "*".
-- nfs_export_options are the options to apply to the export.
-- nfs_client_mnt_point is the path to the mountpoint on the NFS clients.
-- nfs_client_mnt_options allows passing mount options to the NFS client.
-- nfs_server is the IP address or hostname of the NFS server.
-- nfs_enable: a mapping with keys server and client - values are bools determining the role of the host.
-
-After setup OK, checking!!!
-
+1, Clone this Git repository to your local working station:
 ```bash
-ansible -i hosts all -m ping
+git clone https://github.com/nulldoot2k/cluster-k8s-ansible.git
 ```
-
-## How's it work!
-
+2, Change directory to the root directory of the project
 ```bash
-ansible-playbook -i hosts playbook.yml
+cd cluster-k8s-ansible
+```
+3, Edit the values of the default variables to your requirements
+```bash
+vi defaults/main.yaml
+```
+4, Edit the Ansible inventory file to your requirements
+```bash
+vi inventory/hosts.ini
+```
+5, Run the Ansible Playbook:
+```bash
+ansible-playbook -i inventory/hosts.ini playbook.yml
 ```
 
 ## Uninstall Cluster
 
 ```bash
 ansible-playbook -i hosts playbook.yml --tags uninstall-cluster
-```
-
-## StorageClass
-
-```bash
-git clone https://github.com/nulldoot2k/NFS-Volume-K8S.git
-kubectl apply -f NFS-Volume-K8s/
 ```
 
 ## Deploy Nginxx
@@ -72,21 +69,21 @@ Kubernetes offers several options when exposing your service based on a feature 
 The default Service-type is ClusterIP.
 
 ```bash
-kubectl create service nodeport nginx --tcp=80:80
+kubectl create service loadbalancer nginx --tcp=80:80
 ```
 
 Check service
 
 ```bash
 kubectl get svc
-NAME         TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)        AGE
-nginx        NodePort    10.101.230.145   <none>        80:31150/TCP   5m54s
+NAME         TYPE           CLUSTER-IP      EXTERNAL-IP     PORT(S)        AGE
+nginx        LoadBalancer   10.96.163.143   192.168.101.1   80:31451/TCP   106s
 ```
 
 ## Checking
 
 ```bash
-curl $HOSTNAME:31150
+curl 192.168.101.1
 --> results <--
 <!DOCTYPE html>
 <html>

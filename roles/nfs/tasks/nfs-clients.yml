@@ -1,32 +1,38 @@
 ---
 
-- name: Install NFS packages Client
-  apt:
-    name: nfs-common
-    state: present
+- name: "Install :: updates package client lists"
   become: true
+  apt:
+    update_cache: true
+    force_apt_get: true
 
-- name: check if mount directory exists
+- name: Install NFS packages Client
+  become: true
+  apt:
+    pkg: nfs-common
+    force_apt_get: true
+
+- name: Check if mount directory exists
   stat:
-    path: "{{ nfs_client_mnt_point }}"
+    path: "{{ nfs.nfs_client_mnt_point }}"
   register: _nfs_mountpoint
   failed_when: false
 
-- name: unmount stale nfs mount
+- name: Unmount stale nfs mount
   mount:
-    path: "{{ item.get('nfs_client_mnt_point', nfs_client_mnt_point) }}"
+    path: "{{ nfs.nfs_client_mnt_point }}"
     state: unmounted
   when: "'Stale file handle' in _nfs_mountpoint.msg | default('')"
 
-- name: ensure mount directory exists
+- name: Ensure mount directory exists
   file:
-    path: "{{ item.get('nfs_client_mnt_point', nfs_client_mnt_point) }}"
+    path: "{{ nfs.nfs_client_mnt_point }}"
     state: directory
 
-- name: mount the filesystem
+- name: Mount the filesystem
   mount:
-    path: "{{ item.get('nfs_client_mnt_point', nfs_client_mnt_point) }}"
-    src: "{{ item.get('nfs_server', nfs_server) }}:{{ item.get('nfs_export', nfs_export) }}"
-    opts: "{{ item['nfs_client_mnt_options'] | default(nfs_client_mnt_options, true) | default(omit, true) }}"
-    fstype: nfs
-    state: "{{ item.get('nfs_client_mnt_state', nfs_client_mnt_state) }}"
+    path: "{{ nfs.nfs_client_mnt_point }}"
+    src: "{{ hostvars[groups['nfs_server'][0]]['ansible_host'] }}:{{ nfs.nfs_export }}"
+    opts: "{{ item['nfs.nfs_client_mnt_options'] | default(nfs.nfs_client_mnt_options, true) | default(omit, true) }}"
+    fstype: nfs4
+    state: "{{ nfs.nfs_client_mnt_state }}"

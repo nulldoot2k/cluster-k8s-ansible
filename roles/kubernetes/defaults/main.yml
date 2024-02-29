@@ -1,0 +1,10 @@
+
+kubernetes:
+  version: ""
+  CIDR: ""
+  config: "" 
+  file_config: ""
+  file_admin_config: "/etc/kubernetes/admin.conf"
+  logs_cluster: ""
+  logs_pods: ""
+  logs_nodes: ""

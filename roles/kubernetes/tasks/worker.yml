@@ -14,8 +14,8 @@
   - name: TCP port 6443 on master is reachable from worker
     wait_for: "host={{ hostvars[groups['master'][0]]['ansible_host'] }} port=6443 timeout=1"
   - name: join cluster
-    shell: "{{ hostvars[groups['master'][0]].join_command }} >> node_joined.log"
+    shell: "{{ hostvars[groups['master'][0]].join_command }} >> {{ kubernetes.logs_nodes }}"
     args:
       chdir: $HOME
-      creates: node_joined.log
+      creates: "{{ kubernetes.logs_nodes }}"
   when: inventory_hostname in groups['worker']

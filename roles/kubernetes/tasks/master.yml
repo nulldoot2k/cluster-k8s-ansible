@@ -1,18 +1,18 @@
 ---
-- name: create an empty file for Kubeadm configuring
+- name: Create an empty file for Kubeadm configuring
   copy:
     content: ""
-    dest: /etc/kubernetes/kubeadm-config.yaml
+    dest: "{{ kubernetes.file_config }}"
     force: no
 
-- name: configuring the container runtime including its cgroup driver
+- name: Configuring the container runtime including its cgroup driver
   blockinfile:
-    path: /etc/kubernetes/kubeadm-config.yaml
+    path: "{{ kubernetes.file_config }}"
     block: |
          kind: ClusterConfiguration
          apiVersion: kubeadm.k8s.io/v1beta3
          networking:
-           podSubnet: "10.244.0.0/16"
+           podSubnet: "{{ kubernetes.CIDR }}"
          ---
          kind: KubeletConfiguration
          apiVersion: kubelet.config.k8s.io/v1beta1
@@ -27,31 +27,31 @@
          enforceNodeAllocatable:
          - pods
 
-- name: initialize the cluster (this could take some time)
-  shell: kubeadm init --config /etc/kubernetes/kubeadm-config.yaml >> cluster_initialized.log
+- name: Initialize the cluster (this could take some time)
+  shell: "kubeadm init --config {{ kubernetes.file_config }} >> {{ kubernetes.logs_cluster }}"
   args:
     chdir: /root/
-    creates: cluster_initialized.log
+    creates: "{{ kubernetes.logs_cluster }}"
 
-- name: create .kube directory
+- name: Create .kube directory
   become: yes
   become_user: root
   file:
-    path: $HOME/.kube
+    path: "{{ kubernetes.config }}"
     state: directory
     mode: 0755
 
-- name: copy admin.conf to user's kube config
+- name: Copy admin.conf to user's kube config
   copy:
-    src: /etc/kubernetes/admin.conf
-    dest: $HOME/.kube/config
+    src: "{{ kubernetes.file_admin_config }}"
+    dest: "{{ kubernetes.config }}/config"
     remote_src: yes
     owner: root
 
-- name: install Pod network
+- name: Install Pod network
   become: yes
   become_user: root
-  shell: kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml >> pod_network_setup.log
+  shell: "kubectl apply -f {{ plannel.url }} >> {{ kubernetes.logs_pods }}"
   args:
     chdir: $HOME
-    creates: pod_network_setup.log
+    creates: "{{ kubernetes.logs_pods }}"

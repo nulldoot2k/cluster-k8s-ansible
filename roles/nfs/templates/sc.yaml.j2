@@ -1,9 +1,9 @@
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: "{{ storageclass_name }}"
-provisioner: k8s-sigs.io/nfs-subdir-external-provisioner 
+  name: "{{ nfs_storage.storageclass_name }}"
+provisioner: "{{ nfs_storage.provisioner }}"
 parameters:
-  archiveOnDelete: "false"
+  archiveOnDelete: "{{ nfs_storage.archive_delete }}"
 reclaimPolicy: Retain
 allowVolumeExpansion: true

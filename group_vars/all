@@ -1,0 +1,40 @@
+kubernetes:
+  version: "1.23.*"
+  CIDR: "10.244.0.0/16"
+  config: "/{{ ansible_user }}/.kube" # /root/.kube
+  file_config: "/etc/kubernetes/kubeadm-config.yaml"
+  file_admin_config: "/etc/kubernetes/admin.conf"
+  logs_cluster: "cluster_initialized.log"
+  logs_pods: "pod_network_setup.log"
+  logs_nodes: "node_joined.log"
+
+plannel:
+  url: "https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml"
+
+metallb:
+  addresses: 192.168.101.0/24
+  version: "v0.13.12"
+
+ingress_nginx:
+  version: "v1.9.4"
+  provider: "cloud"
+
+nfs:
+  nfs_fstype: "ext4" # df -T / --> to check
+  nfs_export_subnet: "*"
+  nfs_export_options: "rw,sync,no_subtree_check,insecure,no_root_squash"
+  nfs_disk_location:
+  nfs_client_mnt_options: 
+  nfs_client_mnt_state: mounted
+  nfs_export: "/data/nfs_server" # Server
+  nfs_client_mnt_point: "/data/nfs_client" # client
+  nfs_path_tmp: "/tmp/nfs/" # folder contain script deploy storageclass from server master
+  server: "{{ inventory_hostname in groups['nfs_server'] }}"
+  clients: "{{ inventory_hostname in groups['worker'] }}"
+nfs_storage:
+  whitelist_ips: 
+    - 192.168.101.0/24
+  archive_delete: "false"
+  storageclass_name: managed-nfs-storage # kubectl get sc
+  deployment_name: nfs-client-provisioner  # kubectl get deploy
+  provisioner: k8s-sigs.io/nfs-subdir-external-provisioner

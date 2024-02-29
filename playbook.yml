@@ -1,5 +1,12 @@
 ---
 
+# - name: Ansible-Kubernetes Repository
+#   hosts: [all]
+#   tasks:
+#     - name: Variables Defaults
+#       include_vars:
+#         file: defaults/main.yml
+
 - name: Ensure common
   tags: [ common ]
   hosts: [ cluster ] 
@@ -18,12 +25,17 @@
   become: true
   roles: [kubernetes]
 
+- name: Setup Metallb
+  hosts: [master]
+  become: true
+  roles: [metallb]
+
+- name: Setup Controller Ingress Nginx
+  hosts: [master]
+  become: true
+  roles: [ingress-nginx]
+
 - name: Setup NFS
   hosts: [all]
   become: true
-  roles:
-    - role: nfs
-      nfs_enable:
-        server: "{{ inventory_hostname in groups['nfs_server'] }}"
-        clients: "{{ inventory_hostname in groups['worker'] }}"
-      nfs_server: "{{ hostvars[groups['nfs_server'][0]]['ansible_host'] }}"
+  roles: [nfs]
