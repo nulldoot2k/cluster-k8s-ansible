@@ -49,3 +49,12 @@
     line: "Environment=\"KUBELET_EXTRA_ARGS= --runtime-cgroups=/system.slice/containerd.service --container-runtime-endpoint=unix:///run/containerd/containerd.sock\""
     insertafter: '\[Service\]'
   when: check_args.stdout == ""
+
+- name: Configure node-ip {{ kubernetes.master_node }} at kubelet
+  lineinfile:
+    path: '/etc/systemd/system/kubelet.service.d/10-kubeadm.conf'
+    line: 'Environment="KUBELET_EXTRA_ARGS=--node-ip={{ kubernetes.master_node }}"'
+    regexp: 'KUBELET_EXTRA_ARGS='
+    insertafter: '\[Service\]'
+    state: present
+  notify: restart kubelet

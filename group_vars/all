@@ -1,6 +1,7 @@
 kubernetes:
   version: "1.28.*"
   CIDR: "10.244.0.0/16"
+  master_node: "{{ hostvars[groups['master'][0]]['ansible_host'] }}"
   config: "/{{ ansible_user }}/.kube" # /root/.kube
   file_config: "/etc/kubernetes/kubeadm-config.yaml"
   file_admin_config: "/etc/kubernetes/admin.conf"
@@ -34,6 +35,7 @@ nfs:
 nfs_storage:
   whitelist_ips: 
     - 192.168.101.0/24
+    - 10.0.2.0/24
   archive_delete: "false"
   storageclass_name: managed-nfs-storage # kubectl get sc
   deployment_name: nfs-client-provisioner  # kubectl get deploy
