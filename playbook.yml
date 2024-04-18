@@ -1,16 +1,16 @@
 ---
 
-# - name: Ensure common
-#   tags: [ common ]
-#   hosts: [ cluster ] 
-#   become: true
-#   roles: [ common ]
-#
-# - name: Ensure docker
-#   tags: ['docker']
-#   hosts: [cluster]
-#   become: true
-#   roles: [ docker ]
+- name: Ensure common
+  tags: [ common ]
+  hosts: [ cluster ] 
+  become: true
+  roles: [ common ]
+
+- name: Ensure docker
+  tags: ['docker']
+  hosts: [cluster]
+  become: true
+  roles: [ docker ]
 
 - name: Deploy Cluster K8s
   tags: ['k8s']
