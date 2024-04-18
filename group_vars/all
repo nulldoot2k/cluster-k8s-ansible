@@ -1,5 +1,5 @@
 kubernetes:
-  version: "1.23.*"
+  version: "1.28.*"
   CIDR: "10.244.0.0/16"
   config: "/{{ ansible_user }}/.kube" # /root/.kube
   file_config: "/etc/kubernetes/kubeadm-config.yaml"
@@ -17,7 +17,7 @@ metallb:
 
 ingress_nginx:
   version: "v1.9.4"
-  provider: "cloud"
+  provider: "baremetal"
 
 nfs:
   nfs_fstype: "ext4" # df -T / --> to check

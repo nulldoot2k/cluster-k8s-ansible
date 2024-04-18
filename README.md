@@ -1,4 +1,4 @@
-# <center> Ansible-Kubernetes Repository </center>
+# <center> Ansible-Kubernetes Repository 1.28.X </center>
 
 <center>Automate the provisioning of a new bare-metal multi-node Kubernetes cluster with Ansible. Uses all the industry-standard tools for an enterprise-grade cluster.</center>
 
@@ -23,6 +23,8 @@
 
 1. A Linux machine with a superuser privileges and pre-installed Ansible.
 2. Ubuntu machines that are intended to become part of the new Kubernetes cluster. 
+3. 2VCpu/Mem for Nodes
+4. Ubuntu jammy 20.04.2 LTS
 
 Make sure that your SSH key is already installed on the machines by running the following command:
 

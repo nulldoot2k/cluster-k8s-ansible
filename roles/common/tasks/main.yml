@@ -1,17 +1,7 @@
 ---
 - name: Update package
   become: true
-  shell: "apt update && apt update --fix-missing -y"
-  tags: common
-
-- name: Fixing dpkg
-  become: true
-  shell: "sudo dpkg --configure -a"
-  tags: common
-
-- name: Update system package
-  become: true
-  shell: "sudo apt-get update"
+  shell: "apt-get update"
   tags: common
 
 - name: disable SWAP (Kubeadm requirement)
@@ -64,26 +54,53 @@
       - gnupg
       - apt-utils
       - lsb-release
+      - software-properties-common
     force_apt_get: true
 
-- name: Add Docker apt-key
-  apt_key:
-    url: https://download.docker.com/linux/ubuntu/gpg
-    state: present
+- name: Download Docker GPG key
+  shell: wget -O - https://download.docker.com/linux/ubuntu/gpg > ./docker.key
+  args:
+    chdir: /tmp
+
+- name: Import Docker GPG key
+  shell: gpg --no-default-keyring --keyring ./docker.gpg --import ./docker.key
+  args:
+    chdir: /tmp
+
+- name: Export Docker GPG key to archive keyring
+  shell: gpg --no-default-keyring --keyring ./docker.gpg --export > ./docker-archive-keyring.gpg
+  args:
+    chdir: /tmp
+
+- name: Move Docker archive keyring to trusted GPG directory
+  become: true
+  become_user: root
+  shell: sudo mv /tmp/docker-archive-keyring.gpg /etc/apt/trusted.gpg.d/
+
+- name: Check if Docker repository file exists
+  stat:
+    path: "/etc/apt/sources.list.d/docker-{{ ansible_distribution_release }}.list"
+  register: docker_repo_file
 
 - name: Add Docker's APT repository
   apt_repository:
     repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+    state: present
     filename: "docker-{{ ansible_distribution_release }}"
-    state: present
+  when: docker_repo_file.stat.exists == False
 
-- name: Add Kubernetes apt-key
-  apt_key:
-    url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
-    state: present
+- name: Check if Kubernetes repository file exists
+  stat:
+    path: "/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
+  register: k8s_repo_file
 
-- name: Add Kubernetes' APT repository
-  apt_repository:
-    repo: deb https://apt.kubernetes.io/ kubernetes-xenial main
-    state: present
-    filename: 'kubernetes'
+- name: Get kubernetes apt key
+  shell: >
+    curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+  become: yes
+  when: k8s_repo_file.stat.exists == False
+
+- name: Add kubernetes apt repository
+  shell: >
+    echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+  become: yes
