@@ -1,5 +1,35 @@
 ---
 
+- name: Checking Ping Results
+  hosts: [all]
+  gather_facts: false
+  tasks:
+
+    - name: Ping the hosts
+      ping:
+      register: ping_result
+
+    - name: Display Ping Result
+      debug:
+        var: ping_result
+
+    - name: Display IP and User
+      debug:
+        msg: "Host {{ inventory_hostname }} ({{ ansible_host }}) - User: {{ ansible_user }}"
+
+- hosts: [all]
+  gather_facts: false
+  vars_prompt:
+    - name: user_input
+      prompt: "Do you want to continue (yes/no)?"
+      private: no
+
+  tasks:
+    - name: Validate user input
+      fail:
+        msg: "See you again!"
+      when: user_input | lower not in ['yes', 'y']
+
 - name: Ensure common
   tags: [ common ]
   hosts: [ cluster ] 
@@ -17,6 +47,21 @@
   hosts: [cluster]
   become: true
   roles: [kubernetes]
+
+- name: Setup CNI Flannel
+  hosts: [master]
+  become: true
+  roles: [flannel]
+
+- name: Setup CNI Calico
+  hosts: [master]
+  become: true
+  roles: [calico]
+
+- name: Setup Cert Manager
+  hosts: [master]
+  become: true
+  roles: [cert-manager]
 
 - name: Setup Metallb
   hosts: [master]

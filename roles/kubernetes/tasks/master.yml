@@ -47,11 +47,3 @@
     dest: "{{ kubernetes.config }}/config"
     remote_src: yes
     owner: root
-
-- name: Install Pod network
-  become: yes
-  become_user: root
-  shell: "kubectl apply -f {{ plannel.url }} >> {{ kubernetes.logs_pods }}"
-  args:
-    chdir: $HOME
-    creates: "{{ kubernetes.logs_pods }}"

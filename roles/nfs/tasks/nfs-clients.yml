@@ -1,6 +1,6 @@
 ---
 
-- name: "Install :: updates package client lists"
+- name: "Updates package client lists"
   become: true
   apt:
     update_cache: true

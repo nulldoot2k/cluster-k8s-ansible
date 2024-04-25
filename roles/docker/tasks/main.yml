@@ -1,13 +1,14 @@
 ---
 - name: install Containerd
   apt:
-    name: 
-      - docker-ce
-      - docker-ce-cli
+    pkg: 
       - containerd.io
-      - docker-buildx-plugin
-      - docker-compose-plugin
+      # - docker-ce
+      # - docker-ce-cli
+      # - docker-buildx-plugin
+      # - docker-compose-plugin
     state: present
+    force_apt_get: true
 
 - name: create Containerd directory
   file:
@@ -20,16 +21,16 @@
 - name: configuring the systemd cgroup driver for Containerd
   shell: sudo sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
 
-- name: enable the Containerd service and start it
+- name: Enable the Containerd service and start it
   systemd:
     name: containerd
     state: restarted
     enabled: yes
     daemon-reload: yes
 
-- name: enable the Docker service and start it
-  systemd:
-    name: docker
-    state: restarted
-    enabled: yes
-    daemon-reload: yes
+# - name: Enable the Docker service and start it
+#   systemd:
+#     name: docker
+#     state: restarted
+#     enabled: yes
+#     daemon-reload: yes

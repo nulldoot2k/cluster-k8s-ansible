@@ -6,8 +6,15 @@ kubernetes:
   file_config: "/etc/kubernetes/kubeadm-config.yaml"
   file_admin_config: "/etc/kubernetes/admin.conf"
   logs_cluster: "cluster_initialized.log"
-  logs_pods: "pod_network_setup.log"
+  logs_pods_flannel: "pod_network_setup_flannel.log"
+  logs_pods_calico: "pod_network_setup_calico.log"
   logs_nodes: "node_joined.log"
+
+cert_manager:
+  version: "v1.13.3"
+
+calico:
+  version: "v3.26.4"
 
 plannel:
   url: "https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml"

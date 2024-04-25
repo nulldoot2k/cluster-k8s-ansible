@@ -1,61 +1,62 @@
 ---
-- name: Update package
-  become: true
-  shell: "apt-get update"
+- name: "Update package lists"
+  apt:
+    update_cache: true
+    force_apt_get: true
   tags: common
 
-- name: disable SWAP (Kubeadm requirement)
-  shell: |
-    swapoff -a
-
-- name: disable SWAP in fstab (Kubeadm requirement)
-  replace:
-    path: /etc/fstab
-    regexp: '^([^#].*?\sswap\s+sw\s+.*)$'
-    replace: '# \1'
-
-- name: Create an empty file for the Containerd module
-  copy:
-    content: ""
-    dest: /etc/modules-load.d/containerd.conf
-    force: no
-
-- name: Configure modules for Containerd
-  blockinfile:
-    path: /etc/modules-load.d/containerd.conf
-    block: |
-      overlay
-      br_netfilter
-
-- name: Create an empty file for Kubernetes sysctl params
-  copy:
-    content: ""
-    dest: /etc/sysctl.d/k8s.conf
-    force: no
-
-- name: Configure sysctl params for Kubernetes
-  lineinfile:
-    path: /etc/sysctl.d/k8s.conf
-    line: "{{ item }}"
-  with_items:
-    - 'net.bridge.bridge-nf-call-iptables  = 1'
-    - 'net.bridge.bridge-nf-call-ip6tables = 1'
-    - 'net.ipv4.ip_forward                 = 1'
-
-- name: Apply sysctl params without reboot
-  command: sysctl --system
-
 - name: Install APT Transport HTTPS
+  tags: common
   apt:
-    name: 
+    pkg: 
       - apt-transport-https
       - ca-certificates
       - curl
-      - gnupg
+      - gnupg2
       - apt-utils
-      - lsb-release
       - software-properties-common
+      - lsb-release
     force_apt_get: true
+
+- name: Disable system SWAP
+  tags: common
+  shell: "swapoff -a"
+
+- name: Removes current swaps from the filesystem tab
+  tags: common
+  lineinfile:
+    path: "/etc/fstab"
+    regexp: '(?i)^([^#][\S]+\s+(none|swap)\s+swap.*)'
+    line: '# \1'
+    backrefs: true
+    state: present
+
+- name: "Ensures that br_netfilter is enabled"
+  become: true
+  modprobe:
+    name: "br_netfilter"
+    state: present
+
+- name: "Ensures that overlay is enabled"
+  become: true
+  modprobe:
+    name: "overlay"
+    state: present
+
+- name: "Sets the required networking rules"
+  become: true
+  sysctl:
+    name: "{{ item }}"
+    value: "1"
+    state: present
+    reload: true
+  loop:
+    - "net.bridge.bridge-nf-call-iptables"
+    - "net.bridge.bridge-nf-call-ip6tables"
+    - "net.ipv4.ip_forward"
+
+- name: Apply sysctl params without reboot
+  command: sysctl --system
 
 - name: Download Docker GPG key
   shell: wget -O - https://download.docker.com/linux/ubuntu/gpg > ./docker.key

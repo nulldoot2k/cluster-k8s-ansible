@@ -2,8 +2,11 @@ apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
   name: "{{ nfs_storage.storageclass_name }}"
+  annotations:
+    nfs.io/storage-path: "true"
+    nfs.io/delete-on-release: "true"
 provisioner: "{{ nfs_storage.provisioner }}"
 parameters:
   archiveOnDelete: "{{ nfs_storage.archive_delete }}"
-reclaimPolicy: Retain
+  reclaimPolicy: Delete
 allowVolumeExpansion: true

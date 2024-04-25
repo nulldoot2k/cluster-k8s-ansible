@@ -1,13 +1,11 @@
 ---
 
-- name: "Install :: updates package server lists"
-  become: true
+- name: "Updates package server lists"
   apt:
     update_cache: true
     force_apt_get: true
 
 - name: Install NFS packages Server
-  become: true
   apt:
     pkg: nfs-kernel-server
     force_apt_get: true
@@ -16,7 +14,7 @@
   file:
     path: "{{ nfs.nfs_export }}"
     state: directory
-    mode: '0755'
+    mode: '0777'
     owner: nobody
     group: nogroup
 
@@ -47,15 +45,13 @@
   notify: re-export filesystem
 
 - name: Restart nfs-kernel-server service
-  become: true
   systemd:
     name: nfs-kernel-server
     state: started
     daemon_reload: yes
 
-- name: Run exportfs command
-  become: true
-  command: exportfs -a
+- name: "Re-export the share"
+  command: exportfs -rav
 
 - name: Check if NFS access rules exist
   iptables:

@@ -18,8 +18,9 @@
     src: "{{ item.src }}"
     dest: "{{ item.dest }}"
   with_items:
-    - { src: 'templates/rbac.yaml.j2', dest: '/tmp/nfs/001-rbac.yaml' }
-    - { src: 'templates/sc.yaml.j2', dest: '/tmp/nfs/002-sc.yaml' }
+    - { src: 'templates/sa.yaml.j2', dest: '/tmp/nfs/000-sa.yaml' }
+    - { src: 'templates/sc.yaml.j2', dest: '/tmp/nfs/001-sc.yaml' }
+    - { src: 'templates/rbac.yaml.j2', dest: '/tmp/nfs/002-rbac.yaml' }
     - { src: 'templates/deploy.yaml.j2', dest: '/tmp/nfs/003-deploy.yaml' }
 
 - name: Check if storageclass exists
