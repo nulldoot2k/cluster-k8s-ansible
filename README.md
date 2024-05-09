@@ -2,6 +2,8 @@
 
 <center>Automate the provisioning of a new bare-metal multi-node Kubernetes cluster with Ansible. Uses all the industry-standard tools for an enterprise-grade cluster.</center>
 
+![image](https://github.com/nulldoot2k/cluster-k8s-ansible/assets/83489434/2626d953-bd21-4755-9e58-d51ea1124b6f)
+
 ## Table of Contents
 
 - [Stack](#stack) 
