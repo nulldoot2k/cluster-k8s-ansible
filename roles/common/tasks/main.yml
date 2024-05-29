@@ -1,0 +1,107 @@
+---
+- name: "Update package lists"
+  apt:
+    update_cache: true
+    force_apt_get: true
+  tags: common
+
+- name: Install APT Transport HTTPS
+  tags: common
+  apt:
+    pkg: 
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg2
+      - apt-utils
+      - software-properties-common
+      - lsb-release
+    force_apt_get: true
+
+- name: Disable system SWAP
+  tags: common
+  shell: "swapoff -a"
+
+- name: Removes current swaps from the filesystem tab
+  tags: common
+  lineinfile:
+    path: "/etc/fstab"
+    regexp: '(?i)^([^#][\S]+\s+(none|swap)\s+swap.*)'
+    line: '# \1'
+    backrefs: true
+    state: present
+
+- name: "Ensures that br_netfilter is enabled"
+  become: true
+  modprobe:
+    name: "br_netfilter"
+    state: present
+
+- name: "Ensures that overlay is enabled"
+  become: true
+  modprobe:
+    name: "overlay"
+    state: present
+
+- name: "Sets the required networking rules"
+  become: true
+  sysctl:
+    name: "{{ item }}"
+    value: "1"
+    state: present
+    reload: true
+  loop:
+    - "net.bridge.bridge-nf-call-iptables"
+    - "net.bridge.bridge-nf-call-ip6tables"
+    - "net.ipv4.ip_forward"
+
+- name: Apply sysctl params without reboot
+  command: sysctl --system
+
+- name: Download Docker GPG key
+  shell: wget -O - https://download.docker.com/linux/ubuntu/gpg > ./docker.key
+  args:
+    chdir: /tmp
+
+- name: Import Docker GPG key
+  shell: gpg --no-default-keyring --keyring ./docker.gpg --import ./docker.key
+  args:
+    chdir: /tmp
+
+- name: Export Docker GPG key to archive keyring
+  shell: gpg --no-default-keyring --keyring ./docker.gpg --export > ./docker-archive-keyring.gpg
+  args:
+    chdir: /tmp
+
+- name: Move Docker archive keyring to trusted GPG directory
+  become: true
+  become_user: root
+  shell: sudo mv /tmp/docker-archive-keyring.gpg /etc/apt/trusted.gpg.d/
+
+- name: Check if Docker repository file exists
+  stat:
+    path: "/etc/apt/sources.list.d/docker-{{ ansible_distribution_release }}.list"
+  register: docker_repo_file
+
+- name: Add Docker's APT repository
+  apt_repository:
+    repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+    state: present
+    filename: "docker-{{ ansible_distribution_release }}"
+  when: docker_repo_file.stat.exists == False
+
+- name: Check if Kubernetes repository file exists
+  stat:
+    path: "/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
+  register: k8s_repo_file
+
+- name: Get kubernetes apt key
+  shell: >
+    curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+  become: yes
+  when: k8s_repo_file.stat.exists == False
+
+- name: Add kubernetes apt repository
+  shell: >
+    echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+  become: yes

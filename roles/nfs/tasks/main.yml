@@ -1,0 +1,15 @@
+---
+
+- name: If nfs-server is present
+  include_tasks: nfs-server.yml
+  when: inventory_hostname in groups['nfs_server']
+  loop: "{{ nfs_configurations }}"
+
+- name: If nfs-clients is present
+  include_tasks: nfs-clients.yml
+  when: inventory_hostname in groups['worker']
+  loop: "{{ nfs_configurations }}"
+
+- name: Deploy StorageClass
+  include_tasks: storageclass.yml
+  when: inventory_hostname in groups['master']

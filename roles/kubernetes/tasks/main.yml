@@ -1,0 +1,15 @@
+---
+- name: Include main tasks
+  include_tasks: k8s.yml
+
+- name: Init Master
+  include_tasks: master.yml
+  when: inventory_hostname in groups['master']
+
+- name: Join Worker
+  include_tasks: worker.yml
+
+- name: Uninstall Cluster
+  tags: [uninstall-cluster]
+  include_tasks: uninstall.yml
+  when: "'uninstall-cluster' in (tags | default([]))"
