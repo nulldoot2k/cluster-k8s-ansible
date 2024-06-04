@@ -1,4 +1,8 @@
+lb:
+  lb_path_enabled: "/etc/nginx/sites-enabled/"
+
 kubernetes:
+  vs: "1.28"
   version: "1.28.*"
   CIDR: "10.244.0.0/16"
   master_node: "{{ hostvars[groups['master'][0]]['ansible_host'] }}"

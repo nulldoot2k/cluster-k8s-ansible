@@ -1,0 +1,21 @@
+---
+- name: install nginx
+  apt:
+    update_cache: yes
+    name: nginx
+    state: present
+  notify: start nginx
+
+- name: copy configuration files
+  template:
+    src: "k8s-lb.j2"
+    dest: "{{ lb.lb_path_enabled }}/{{ item }}"
+    mode: 0644
+  loop:
+    - "k8s-lb.conf"
+  notify: restart nginx
+
+- name: uninstall nginx
+  shell: apt-get remove --purge -y nginx nginx-full nginx-common
+  tags: uninstall-nginx
+  when: "'uninstall-nginx' in ansible_run_tags"

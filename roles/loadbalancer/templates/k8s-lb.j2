@@ -1,0 +1,14 @@
+upstream kubernetes {
+{% for host in groups['master'] %}
+    server {{ hostvars[host]['ansible_host'] }}:6443;
+{% endfor %}
+}
+
+server {
+    listen 6443;
+    listen 443;
+
+    location / {
+        proxy_pass http://kubernetes;
+    }
+}

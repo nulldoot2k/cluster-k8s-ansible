@@ -1,34 +1,26 @@
 ---
-
-- name: Checking Ping Results
-  hosts: [all]
+- name: Checking Host Information
+  hosts: ["{{ user_input if user_input != '' else 'all' }}"]
   gather_facts: false
-  tasks:
-
-    - name: Ping the hosts
-      ping:
-      register: ping_result
-
-    - name: Display Ping Result
-      debug:
-        var: ping_result
-
-    - name: Display IP and User
-      debug:
-        msg: "Host {{ inventory_hostname }} ({{ ansible_host }}) - User: {{ ansible_user }}"
-
-- hosts: [all]
-  gather_facts: false
+  tags: [checking-hosts]
+  roles: [checking-hosts]
   vars_prompt:
     - name: user_input
-      prompt: "Do you want to continue (yes/no)?"
+      prompt: "Enter the group name in hosts (or press Enter for 'all' to ignore)"
+      default: "{{ groups | join(',') }}"
       private: no
 
-  tasks:
-    - name: Validate user input
-      fail:
-        msg: "See you again!"
-      when: user_input | lower not in ['yes', 'y']
+- name: Ensure tests
+  tags: [ hello ]
+  hosts: [ master ] 
+  become: true
+  roles: [ tests ]
+
+- name: Ensure Nginx
+  hosts: [ master ] 
+  become: true
+  roles:
+    - { role: loadbalancer, tags: nginx,uninstall-nginx }
 
 - name: Ensure common
   tags: [ common ]

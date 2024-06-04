@@ -97,11 +97,15 @@
 
 - name: Get kubernetes apt key
   shell: >
-    curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+    curl -fsSL https://pkgs.k8s.io/core:/stable:/v{{ kubernetes.vs }}/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
   become: yes
   when: k8s_repo_file.stat.exists == False
 
 - name: Add kubernetes apt repository
   shell: >
-    echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+    echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v{{ kubernetes.vs }}/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
   become: yes
+
+# - name: Add key kubernetes version 1.20
+#   shell: >
+#     echo "deb http://apt.kubernetes.io/ kubernetes-xenial main" > /etc/apt/sources.list.d/kubernetes.list
