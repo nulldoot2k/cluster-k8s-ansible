@@ -1,19 +1,12 @@
 ---
-- name: Install Kubelet
+- name: Install Kubernetes components
   apt:
-    name: "kubelet={{ kubernetes.version }}"
+    name:
+      - "kubelet={{ kubernetes.version }}"
+      - "kubeadm={{ kubernetes.version }}"
+      - "kubectl={{ kubernetes.version }}"
     state: present
     update_cache: true
-
-- name: Install Kubeadm
-  apt:
-    name: "kubeadm={{ kubernetes.version }}"
-    state: present
-
-- name: Install Kubectl
-  name: "kubectl={{ kubernetes.version }}"
-  apt:
-    state: present
     force: true
 
 - name: Hold version

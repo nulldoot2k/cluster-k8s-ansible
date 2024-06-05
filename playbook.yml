@@ -17,55 +17,64 @@
   roles: [ tests ]
 
 - name: Ensure Nginx
-  hosts: [ master ] 
+  hosts: [ lb ] 
   become: true
   roles:
     - { role: loadbalancer, tags: nginx,uninstall-nginx }
 
 - name: Ensure common
   tags: [ common ]
-  hosts: [ cluster ] 
+  # hosts: [ cluster ] 
+  hosts: [ master ] 
   become: true
   roles: [ common ]
 
 - name: Ensure docker
   tags: ['docker']
-  hosts: [cluster]
+  # hosts: [cluster]
+  hosts: [master]
   become: true
   roles: [ docker ]
 
 - name: Deploy Cluster K8s
-  tags: ['k8s']
-  hosts: [cluster]
+  tags: [k8s,uninstall-cluster]
+  # hosts: [cluster]
+  hosts: [master]
   become: true
   roles: [kubernetes]
 
 - name: Setup CNI Flannel
+  tags: [cni-flannel]
   hosts: [master]
   become: true
   roles: [flannel]
 
 - name: Setup CNI Calico
+  tags: [cni-calico]
   hosts: [master]
   become: true
   roles: [calico]
 
 - name: Setup Cert Manager
+  tags: [cert]
   hosts: [master]
   become: true
   roles: [cert-manager]
 
 - name: Setup Metallb
+  tags: [metallb]
   hosts: [master]
   become: true
   roles: [metallb]
 
 - name: Setup Controller Ingress Nginx
+  tags: [ingress]
   hosts: [master]
   become: true
   roles: [ingress-nginx]
 
 - name: Setup NFS
+  tags: [nfs]
   hosts: [all]
   become: true
   roles: [nfs]

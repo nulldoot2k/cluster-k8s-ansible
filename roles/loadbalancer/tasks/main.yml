@@ -9,7 +9,7 @@
 - name: copy configuration files
   template:
     src: "k8s-lb.j2"
-    dest: "{{ lb.lb_path_enabled }}/{{ item }}"
+    dest: "{{ lb.lb_path_conf }}/{{ item }}"
     mode: 0644
   loop:
     - "k8s-lb.conf"

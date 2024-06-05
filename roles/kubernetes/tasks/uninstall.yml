@@ -2,11 +2,15 @@
 - name: Reset kubeadm
   shell: kubeadm reset
   ignore_errors: yes
+  args:
+    force: yes
 
 - name: Remove Kubernetes related packages
   apt:
     name: "{{ item }}"
     state: absent
+    update_cache: yes
+    force_apt_get: yes
   with_items:
     - kubeadm
     - kubectl
@@ -14,6 +18,8 @@
     - kubernetes-cni 
     - kube*
   ignore_errors: yes
+  args:
+    force: yes
 
 - name: Remove Docker containers/images
   shell: |
@@ -46,17 +52,15 @@
   file:
     path: "{{ item }}"
     state: absent
-    recurse: yes
   with_items:
-    - "~/.kube"
-    - "/etc/cni"
-    - "/etc/kubernetes"
+    - "{{ ansible_env.HOME }}/.kube"
+    - "/etc/cni/"
+    - "/etc/kubernetes/"
     - "/var/lib/dockershim"
     - "/var/lib/etcd"
     - "/var/lib/kubelet"
     - "/var/lib/etcd2/"
     - "/var/run/kubernetes"
-    - "~/.kube/*"
     - "/var/lib/docker"
     - "/etc/docker"
     - "/var/run/docker.sock"

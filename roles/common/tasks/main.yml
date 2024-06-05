@@ -3,10 +3,8 @@
   apt:
     update_cache: true
     force_apt_get: true
-  tags: common
 
 - name: Install APT Transport HTTPS
-  tags: common
   apt:
     pkg: 
       - apt-transport-https
@@ -23,7 +21,6 @@
   shell: "swapoff -a"
 
 - name: Removes current swaps from the filesystem tab
-  tags: common
   lineinfile:
     path: "/etc/fstab"
     regexp: '(?i)^([^#][\S]+\s+(none|swap)\s+swap.*)'
@@ -95,13 +92,13 @@
     path: "/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
   register: k8s_repo_file
 
-- name: Get kubernetes apt key
+- name: Get kubernetes apt key gpt
   shell: >
     curl -fsSL https://pkgs.k8s.io/core:/stable:/v{{ kubernetes.vs }}/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
   become: yes
   when: k8s_repo_file.stat.exists == False
 
-- name: Add kubernetes apt repository
+- name: Add kubernetes apt repository version 1.28
   shell: >
     echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v{{ kubernetes.vs }}/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
   become: yes

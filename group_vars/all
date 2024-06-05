@@ -1,10 +1,12 @@
 lb:
   lb_path_enabled: "/etc/nginx/sites-enabled/"
+  lb_path_conf: "/etc/nginx/conf.d/"
 
 kubernetes:
-  vs: "1.28"
-  version: "1.28.*"
+  vs: "1.23"
+  version: "1.23.*"
   CIDR: "10.244.0.0/16"
+  kubernetes_apt_release_channel: "stable"
   master_node: "{{ hostvars[groups['master'][0]]['ansible_host'] }}"
   config: "/{{ ansible_user }}/.kube" # /root/.kube
   file_config: "/etc/kubernetes/kubeadm-config.yaml"
