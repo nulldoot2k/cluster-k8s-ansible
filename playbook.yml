@@ -3,7 +3,7 @@
   hosts: ["{{ user_input if user_input != '' else 'all' }}"]
   gather_facts: false
   roles:
-    - { role: checking-hosts, tags: always,checking-hosts }
+    - { role: checking-hosts, tags: checking-hosts }
   vars_prompt:
     - name: user_input
       prompt: "Enter the group name in hosts (or press Enter for 'all' to ignore)"
@@ -23,10 +23,10 @@
     - { role: loadbalancer, tags: nginx,uninstall-nginx }
 
 - name: Ensure common
-  hosts: [ cluster ] 
+  hosts: [ master ] 
   become: true
   roles:
-    - { role: common, tags: common }
+    - { role: common, tags: common,uninstall-common }
     - { role: containerd, tags: docker }
 
 - name: Deploy Cluster K8s

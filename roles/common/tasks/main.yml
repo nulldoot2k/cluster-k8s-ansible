@@ -100,3 +100,9 @@
     filename: kubernetes
     state: present
     update_cache: true
+
+############# uninstall common ##################
+- name: uninstall
+  import_tasks: uninstall.yml
+  tags: [uninstall-common]
+  when: "'uninstall-common' in ansible_run_tags"
