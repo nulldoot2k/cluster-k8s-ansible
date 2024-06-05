@@ -2,9 +2,8 @@
 - name: Checking Host Information
   hosts: ["{{ user_input if user_input != '' else 'all' }}"]
   gather_facts: false
-  tags: [checking-hosts]
   roles:
-    - { role: checking-hosts }
+    - { role: checking-hosts, tags: always,checking-hosts }
   vars_prompt:
     - name: user_input
       prompt: "Enter the group name in hosts (or press Enter for 'all' to ignore)"
@@ -12,10 +11,10 @@
       private: no
 
 - name: Ensure tests
-  tags: [ hello ]
   hosts: [ master ] 
   become: true
-  roles: [ tests ]
+  roles:
+    - { role: tests, tags: hello }
 
 - name: Ensure Nginx
   hosts: [ lb ] 
@@ -24,22 +23,17 @@
     - { role: loadbalancer, tags: nginx,uninstall-nginx }
 
 - name: Ensure common
-  tags: [ common ]
   hosts: [ cluster ] 
   become: true
-  roles: [ common ]
-
-- name: Ensure docker
-  tags: ['docker']
-  hosts: [cluster]
-  become: true
-  roles: [ containerd ]
+  roles:
+    - { role: common, tags: common }
+    - { role: containerd, tags: docker }
 
 - name: Deploy Cluster K8s
-  tags: [k8s,uninstall-cluster]
   hosts: [cluster]
   become: true
-  roles: [kubernetes]
+  roles:
+    - { role: kubernetes, tags: k8s,uninstall-cluster }
 
 - name: Setup Component
   hosts: [master]
@@ -51,7 +45,7 @@
     - { role: ingress-nginx, tags: ingress }
 
 - name: Setup NFS
-  hosts: [all]
+  hosts: [master:cluster]
   become: true
   roles:
     - { role: nfs, tags: nfs }

@@ -1,6 +1,0 @@
----
-- name: Install Pod network Flannel
-  shell: "kubectl apply -f {{ plannel.url }} >> {{ kubernetes.logs_pods_flannel }}"
-  args:
-    chdir: $HOME
-    creates: "{{ kubernetes.logs_pods_flannel }}"

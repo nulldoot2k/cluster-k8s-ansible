@@ -1,6 +1,0 @@
----
-- name: "Install Pod network Calico"
-  shell: "kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/{{ calico.version }}/manifests/calico.yaml >> {{ kubernetes.logs_pods_calico }}"
-  args:
-    chdir: $HOME
-    creates: "{{ kubernetes.logs_pods_calico }}"
