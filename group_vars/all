@@ -25,11 +25,11 @@ kubernetes:
 cert_manager:
   version: "v1.13.3"
 
-calico:
-  version: "v3.26.4"
-
-plannel:
-  url: "https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml"
+cni:
+  calico:
+    version: "v3.26.4"
+  plannel:
+    version: "master"
 
 metallb:
   addresses: 192.168.101.0/24

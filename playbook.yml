@@ -3,7 +3,8 @@
   hosts: ["{{ user_input if user_input != '' else 'all' }}"]
   gather_facts: false
   tags: [checking-hosts]
-  roles: [checking-hosts]
+  roles:
+    - { role: checking-hosts }
   vars_prompt:
     - name: user_input
       prompt: "Enter the group name in hosts (or press Enter for 'all' to ignore)"
@@ -32,7 +33,7 @@
   tags: ['docker']
   hosts: [cluster]
   become: true
-  roles: [ docker ]
+  roles: [ containerd ]
 
 - name: Deploy Cluster K8s
   tags: [k8s,uninstall-cluster]
@@ -40,38 +41,17 @@
   become: true
   roles: [kubernetes]
 
-- name: Setup CNI Flannel
-  tags: [cni-flannel]
+- name: Setup Component
   hosts: [master]
   become: true
-  roles: [flannel]
-
-- name: Setup CNI Calico
-  tags: [cni-calico]
-  hosts: [master]
-  become: true
-  roles: [calico]
-
-- name: Setup Cert Manager
-  tags: [cert]
-  hosts: [master]
-  become: true
-  roles: [cert-manager]
-
-- name: Setup Metallb
-  tags: [metallb]
-  hosts: [master]
-  become: true
-  roles: [metallb]
-
-- name: Setup Controller Ingress Nginx
-  tags: [ingress]
-  hosts: [master]
-  become: true
-  roles: [ingress-nginx]
+  roles:
+    - { role: cni, tags: cni-flannel,cni-calico }
+    - { role: cert-manager, tags: cert }
+    - { role: metallb, tags: metallb }
+    - { role: ingress-nginx, tags: ingress }
 
 - name: Setup NFS
-  tags: [nfs]
   hosts: [all]
   become: true
-  roles: [nfs]
+  roles:
+    - { role: nfs, tags: nfs }

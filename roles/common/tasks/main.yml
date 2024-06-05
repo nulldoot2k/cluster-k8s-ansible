@@ -25,6 +25,32 @@
 - name: Disable system SWAP
   shell: "swapoff -a"
 
+- name: disable SWAP in fstab (Kubeadm requirement)
+  replace:
+    path: /etc/fstab
+    regexp: '^([^#].*?\sswap\s+sw\s+.*)$'
+    replace: '# \1'
+
+- name: create an empty file for the Containerd module
+  copy:
+    content: ""
+    dest: "{{ containerd.file_path_modules }}"
+    force: no
+
+- name: configure modules for Containerd
+  blockinfile:
+    path: "{{ containerd.file_path_modules }}"
+    block: |
+         overlay
+         br_netfilter
+
+- name: create an empty file for Kubernetes sysctl params
+  copy:
+    content: ""
+    dest: /etc/sysctl.d/99-kubernetes-cri.conf
+    force: no
+
+- name: configure sysctl params for Kubernetes
   lineinfile:
     path: /etc/sysctl.d/99-kubernetes-cri.conf
     line: "{{ item }}"
@@ -45,7 +71,7 @@
 - name: add Docker's APT repository
   apt_repository:
     repo: "deb [arch={{ 'amd64' if ansible_architecture == 'x86_64' else 'arm64' }}] https://download.docker.com/linux/{{ansible_distribution|lower}} {{ansible_distribution_release}} stable"
-    filename: docker
+    filename: "docker"
     state: present
     update_cache: yes
 
