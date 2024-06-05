@@ -24,22 +24,19 @@
 
 - name: Ensure common
   tags: [ common ]
-  # hosts: [ cluster ] 
-  hosts: [ master ] 
+  hosts: [ cluster ] 
   become: true
   roles: [ common ]
 
 - name: Ensure docker
   tags: ['docker']
-  # hosts: [cluster]
-  hosts: [master]
+  hosts: [cluster]
   become: true
   roles: [ docker ]
 
 - name: Deploy Cluster K8s
   tags: [k8s,uninstall-cluster]
-  # hosts: [cluster]
-  hosts: [master]
+  hosts: [cluster]
   become: true
   roles: [kubernetes]
 

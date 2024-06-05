@@ -2,13 +2,19 @@ lb:
   lb_path_enabled: "/etc/nginx/sites-enabled/"
   lb_path_conf: "/etc/nginx/conf.d/"
 
+containerd:
+  file_path_conf: "/etc/containerd/"
+  file_path_modules: "/etc/modules-load.d/containerd.conf"
+
 kubernetes:
-  vs: "1.23"
-  version: "1.23.*"
+  kubernetes_version: "1.28"
+  version: "1.28.*"
   CIDR: "10.244.0.0/16"
   kubernetes_apt_release_channel: "stable"
   master_node: "{{ hostvars[groups['master'][0]]['ansible_host'] }}"
-  config: "/{{ ansible_user }}/.kube" # /root/.kube
+  config: "/{{ ansible_user }}/.kube"
+  kubernetes_keyring_file: "/etc/apt/keyrings/kubernetes-apt-keyring.asc"
+  kubernetes_release_channel: "stable"
   file_config: "/etc/kubernetes/kubeadm-config.yaml"
   file_admin_config: "/etc/kubernetes/admin.conf"
   logs_cluster: "cluster_initialized.log"
@@ -34,14 +40,14 @@ ingress_nginx:
   provider: "baremetal"
 
 nfs:
-  nfs_fstype: "ext4" # df -T / --> to check
+  nfs_fstype: "ext4"
   nfs_export_subnet: "*"
   nfs_export_options: "rw,sync,no_subtree_check,insecure,no_root_squash"
   nfs_disk_location:
   nfs_client_mnt_options: 
   nfs_client_mnt_state: mounted
-  nfs_export: "/data/nfs_server" # Server
-  nfs_client_mnt_point: "/data/nfs_client" # client
+  nfs_export: "/data/nfs_server"
+  nfs_client_mnt_point: "/data/nfs_client"
   nfs_path_tmp: "/tmp/nfs/" # folder contain script deploy storageclass from server master
   server: "{{ inventory_hostname in groups['nfs_server'] }}"
   clients: "{{ inventory_hostname in groups['worker'] }}"
@@ -50,6 +56,6 @@ nfs_storage:
     - 192.168.101.0/24
     - 10.0.2.0/24
   archive_delete: "false"
-  storageclass_name: managed-nfs-storage # kubectl get sc
-  deployment_name: nfs-client-provisioner  # kubectl get deploy
+  storageclass_name: managed-nfs-storage
+  deployment_name: nfs-client-provisioner
   provisioner: k8s-sigs.io/nfs-subdir-external-provisioner

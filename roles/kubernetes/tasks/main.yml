@@ -1,17 +1,17 @@
 ---
-# - name: Include main tasks
-#   include_tasks: k8s.yml
-#
-# - name: Init Master
-#   include_tasks: master.yml
-#   when: inventory_hostname in groups['master'][0]
-#
-# - name: Join Master
-#   include_tasks: master-add.yml
-# 
-# - name: Join Worker
-#   include_tasks: worker.yml
-#
+- name: Include main tasks
+  include_tasks: k8s.yml
+
+- name: Init Master
+  include_tasks: master.yml
+  when: inventory_hostname in groups['master'][0]
+
+- name: Join Master
+  include_tasks: master-add.yml
+
+- name: Join Worker
+  include_tasks: worker.yml
+
 - name: Uninstall Cluster
   tags: [uninstall-cluster]
   include_tasks: uninstall.yml
