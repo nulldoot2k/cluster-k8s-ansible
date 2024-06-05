@@ -1,43 +1,15 @@
 ---
-- name: Install Kubelet
+- name: "Installing component k8s {{ kubernetes.version }}"
   apt:
-    name: "kubelet={{ kubernetes.version }}"
-    state: present
-    update_cache: true
-
-- name: Install Kubeadm
-  apt:
-    name: "kubeadm={{ kubernetes.version }}"
-    state: present
-
-- name: Install Kubectl
-  name: "kubectl={{ kubernetes.version }}"
-  apt:
-    state: present
-    force: true
+    name:
+      - "kubelet={{ kubernetes.version }}"
+      - "kubeadm={{ kubernetes.version }}"
+      - "kubectl={{ kubernetes.version }}"
+    update_cache: yes
+  notify: enable kubelet
 
 - name: Hold version
   shell: "sudo apt-mark hold kubelet kubeadm kubectl"
-
-- name: Enable the Kubelet service, and enable it persistently
-  service:
-    name: kubelet
-    enabled: yes
-
-- name: Load br_netfilter kernel module
-  modprobe:
-    name: br_netfilter
-    state: present
-
-- name: Set bridge-nf-call-iptables
-  sysctl:
-    name: net.bridge.bridge-nf-call-iptables
-    value: 1
-
-- name: Set ip_forward
-  sysctl:
-    name: net.ipv4.ip_forward
-    value: 1
 
 - name: Check Kubelet args in Kubelet config
   shell: grep "^Environment=\"KUBELET_EXTRA_ARGS=" /usr/lib/systemd/system/kubelet.service.d/10-kubeadm.conf || true
@@ -46,7 +18,7 @@
 - name: Add runtime args in Kubelet config
   lineinfile:
     dest: "/usr/lib/systemd/system/kubelet.service.d/10-kubeadm.conf"
-    line: 'Environment=\"KUBELET_EXTRA_ARGS= --runtime-cgroups=/system.slice/containerd.service --container-runtime-endpoint=unix:///run/containerd/containerd.sock\"'
+    line: 'Environment="KUBELET_EXTRA_ARGS= --runtime-cgroups=/system.slice/containerd.service --container-runtime-endpoint=unix:///run/containerd/containerd.sock"'
     insertafter: '\[Service\]'
   when: check_args.stdout == ""
   notify: restart kubelet

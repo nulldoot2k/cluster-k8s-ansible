@@ -1,0 +1,14 @@
+---
+- name: restart containerd
+  service:
+    name: containerd
+    state: restarted
+    enabled: yes
+    daemon-reload: yes
+    
+- name: restart docker
+  service:
+    name: docker
+    state: restarted
+    enabled: yes
+    daemon-reload: yes

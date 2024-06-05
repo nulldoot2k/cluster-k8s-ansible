@@ -3,8 +3,11 @@
   include_tasks: k8s.yml
 
 - name: Init Master
+  include_tasks: init.yml
+  when: inventory_hostname in groups['master'][0]
+
+- name: Join Master
   include_tasks: master.yml
-  when: inventory_hostname in groups['master']
 
 - name: Join Worker
   include_tasks: worker.yml

@@ -1,4 +1,10 @@
+---
+- name: enable kubelet
+  service:
+    name: kubelet
+    enabled: yes
+
 - name: restart kubelet
-  systemd:
+  service:
     name: kubelet
     state: restarted
