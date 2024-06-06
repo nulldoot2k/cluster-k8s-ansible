@@ -15,7 +15,7 @@
 
 - name: Common Uninstall - Remove Docker repository
   apt_repository:
-    repo: "deb [arch={{ 'amd64' if ansible_architecture == 'x86_64' else 'arm64' }}] https://download.docker.com/linux/{{ansible_distribution|lower}} {{ansible_distribution_release}} stable"
+    repo: "deb [arch={{ 'amd64' if ansible.ansible_architecture == 'x86_64' else 'arm64' }}] https://download.docker.com/linux/{{ ansible.ansible_distribution|lower }} {{ ansible.ansible_distribution_release }} stable"
     state: absent
 
 - name: Common Uninstall - Delete Docker GPG key
@@ -52,6 +52,11 @@
 - name: Common Uninstall - Delete empty file for Containerd module
   file:
     path: "{{ containerd.file_path_modules }}"
+    state: absent
+
+- name: Remove package container list
+  file:
+    path: "{{ containerd.file_path_list }}"
     state: absent
 
 - name: Common Uninstall - Remove SWAP line in fstab (Kubeadm requirement)

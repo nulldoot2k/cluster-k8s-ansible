@@ -11,8 +11,3 @@
 
 - name: Join Worker
   import_tasks: worker.yml
-
-- name: Uninstall Cluster
-  tags: [uninstall-cluster]
-  import_tasks: uninstall.yml
-  when: "'uninstall-cluster' in ansible_run_tags"

@@ -18,23 +18,23 @@
 - name: Setup NFS
   hosts: [ nfs ]
   roles:
-    - { role: nfs, tags: nfs,uninstall-nfs }
+    - { role: nfs, tags: nfs }
 
 - name: Ensure Nginx
   hosts: [ lb ] 
   roles:
-    - { role: loadbalancer, tags: nginx,uninstall-nginx }
+    - { role: loadbalancer, tags: nginx }
 
 - name: Ensure common
   hosts: [ master ] 
   roles:
-    - { role: common, tags: common,uninstall-common }
-    - { role: containerd, tags: docker }
+    - { role: common, tags: common }
+    - { role: containerd, tags: containerd }
 
 - name: Deploy Cluster K8s
   hosts: [cluster]
   roles:
-    - { role: kubernetes, tags: k8s,uninstall-cluster }
+    - { role: kubernetes, tags: k8s }
 
 - name: Setup Component
   hosts: ["master[0]"]
@@ -44,4 +44,13 @@
     - { role: cert-manager, tags: cert }
     - { role: metallb, tags: metallb }
     - { role: ingress-nginx, tags: ingress }
-    - { role: nfs, tags: k8s-nfs, when: "'uninstall-nfs' not in ansible_run_tags" }
+    - { role: nfs, tags: k8s-nfs }
+
+- name: Uninstall
+  tags:
+    - uninstall-nginx
+    - uninstall-common
+    - uninstall-containerd
+    - uninstall-kubernetes
+  hosts: [ all ]
+  roles: [ uninstall ]

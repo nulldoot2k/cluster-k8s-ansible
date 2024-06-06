@@ -1,0 +1,45 @@
+---
+- include_tasks:
+    file: uninstall-nginx.yml
+    apply:
+      tags: uninstall-nginx
+  tags: [uninstall-nginx]
+  when: 
+    - "'uninstall-nginx' in ansible_run_tags"
+    - inventory_hostname in groups['lb']
+
+- include_tasks:
+    file: uninstall-common.yml
+    apply:
+      tags: uninstall-common
+  tags: [uninstall-common]
+  when: 
+    - "'uninstall-common' in ansible_run_tags"
+    - inventory_hostname in groups['cluster']
+
+- include_tasks:
+    file: uninstall-containerd.yml
+    apply:
+      tags: uninstall-containerd
+  tags: [uninstall-containerd]
+  when: 
+    - "'uninstall-containerd' in ansible_run_tags"
+    - inventory_hostname in groups['master']
+
+- include_tasks:
+    file: uninstall-kubernetes.yml
+    apply:
+      tags: uninstall-kubernetes
+  tags: [uninstall-kubernetes]
+  when:
+    - "'uninstall-kubernetes' in ansible_run_tags"
+    - inventory_hostname in groups['cluster']
+
+- include_tasks: 
+    file: uninstall-nfs.yml
+    apply:
+      tags: uninstall-nfs
+  tags: uninstall-nfs
+  when:
+    - "'uninstall-nfs' in ansible_run_tags"
+    - inventory_hostname in groups['nfs']

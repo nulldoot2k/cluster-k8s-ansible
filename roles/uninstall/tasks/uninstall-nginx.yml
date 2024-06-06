@@ -1,0 +1,27 @@
+---
+- name: Uninstall nginx - Stop and disable Nginx service
+  service:
+    name: nginx
+    state: stopped
+    enabled: no
+
+- name: Uninstall nginx - Remove Nginx package
+  apt:
+    name: "{{ item }}"
+    state: absent
+  loop:
+    - nginx
+    - nginx-full
+    - nginx-common
+
+- name: Uninstall nginx - Remove Nginx configuration files
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /etc/nginx
+    - /var/www/html
+
+- name: Uninstall nginx - Reload systemd daemon
+  systemd:
+    daemon_reload: yes

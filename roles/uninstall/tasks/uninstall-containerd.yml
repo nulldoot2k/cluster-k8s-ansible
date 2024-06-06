@@ -1,0 +1,25 @@
+---
+- name: Uninstall containerd - Stop and disable Docker service
+  service:
+    name: containerd
+    state: stopped
+    enabled: no
+
+- name: Uninstall containerd - Remove Containerd package
+  apt:
+    name: containerd.io
+    state: absent
+
+- name: Uninstall containerd - Remove Containerd directories
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - /etc/containerd
+    - /etc/docker
+    - /var/lib/containerd
+    - /var/lib/docker
+
+- name: Uninstall containerd - Reload systemd daemon
+  systemd:
+    daemon_reload: yes

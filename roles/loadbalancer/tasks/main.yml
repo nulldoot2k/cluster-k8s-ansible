@@ -14,8 +14,3 @@
   loop:
     - "k8s-lb.conf"
   notify: restart nginx
-
-- name: uninstall nginx
-  shell: apt-get remove --purge -y nginx nginx-full nginx-common
-  tags: uninstall-nginx
-  when: "'uninstall-nginx' in ansible_run_tags"

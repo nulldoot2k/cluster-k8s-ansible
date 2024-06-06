@@ -41,7 +41,7 @@
     docker rmi -f $(docker images -aq)
   ignore_errors: yes
 
-- name: Remove Docker packages
+- name: Remove container packages
   apt:
     name: "{{ item }}"
     state: absent
@@ -62,7 +62,7 @@
     autoremove: yes
   ignore_errors: yes
 
-- name: Remove Kubernetes, etcd, and Docker folders
+- name: Remove components folders
   file:
     path: "{{ item }}"
     state: absent

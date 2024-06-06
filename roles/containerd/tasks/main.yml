@@ -11,18 +11,16 @@
   when: "'{{ item }}' not in ansible_facts.packages"
   loop:
     - containerd.io
-    # - docker-ce-cli
-    # - docker-ce
 
-- name: create containerd directory
+- name: Containerd - create containerd directory
   file:
     path: "{{ containerd.file_path_conf }}"
     state: directory
 
-- name: add containerd configuration
+- name: Containerd - add containerd configuration
   shell: containerd config default > /etc/containerd/config.toml
 
-- name: configuring the systemd cgroup driver for Containerd
+- name: Containerd - configuring the systemd cgroup driver for Containerd
   shell: sudo sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
   notify: 
     - restart containerd

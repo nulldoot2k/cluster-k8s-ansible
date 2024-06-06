@@ -14,10 +14,3 @@
   when:
     - inventory_hostname in groups['master']
     - "'k8s-nfs' in ansible_run_tags"
-
-- include_tasks: 
-    file: uninstall.yml
-    apply:
-      tags: uninstall-nfs
-  tags: uninstall-nfs
-  when: "'uninstall-nfs' in ansible_run_tags"
