@@ -1,26 +1,9 @@
 ---
-nfs:
-  nfs_fstype: ""
-  nfs_export: ""
-  nfs_path_tmp: "" 
-  nfs_disk_location:
-  nfs_export_subnet: ""
-  nfs_export_options: ""
-  nfs_client_mnt_point: ""
-  nfs_client_mnt_options: 
-  nfs_client_mnt_state: mounted
-nfs_storage:
-  whitelist_ips: 
-  archive_delete: ""
-  storageclass_name: 
-  deployment_name:
-  provisioner: 
-
-nfs_enable:
-  server: true
-  clients: true
-
-nfs_configurations:
-  - nfs_enable:
-      server: true
-      clients: true
+# nfs_enable:
+#   server: true
+#   clients: true
+#
+# nfs_configurations:
+#   - nfs_enable:
+#       server: true
+#       clients: true

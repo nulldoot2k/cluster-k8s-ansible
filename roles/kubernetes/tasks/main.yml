@@ -1,18 +1,18 @@
 ---
 - name: Include main tasks
-  include_tasks: k8s.yml
+  import_tasks: k8s.yml
 
 - name: Init Master
-  include_tasks: master.yml
+  import_tasks: master.yml
   when: inventory_hostname in groups['master'][0]
 
 - name: Join Master
-  include_tasks: master-add.yml
+  import_tasks: master-add.yml
 
 - name: Join Worker
-  include_tasks: worker.yml
+  import_tasks: worker.yml
 
 - name: Uninstall Cluster
   tags: [uninstall-cluster]
-  include_tasks: uninstall.yml
+  import_tasks: uninstall.yml
   when: "'uninstall-cluster' in ansible_run_tags"
