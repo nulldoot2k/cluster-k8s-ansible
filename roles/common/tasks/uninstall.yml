@@ -1,5 +1,5 @@
 ---
-- name: "Gather the package facts"
+- name: Common Uninstall - Gather the package facts
   package_facts:
     manager: "auto"
 
@@ -8,22 +8,22 @@
     repo: "deb [signed-by={{ kubernetes.kubernetes_keyring_file }}] https://pkgs.k8s.io/core:/{{ kubernetes.kubernetes_release_channel }}:/v{{ kubernetes.kubernetes_version }}/deb/ /"
     state: absent
 
-- name: Delete Kubernetes apt key
+- name: Common Uninstall - Delete Kubernetes apt key
   file:
     path: "{{ kubernetes.kubernetes_keyring_file }}"
     state: absent
 
-- name: Remove Docker repository
+- name: Common Uninstall - Remove Docker repository
   apt_repository:
     repo: "deb [arch={{ 'amd64' if ansible_architecture == 'x86_64' else 'arm64' }}] https://download.docker.com/linux/{{ansible_distribution|lower}} {{ansible_distribution_release}} stable"
     state: absent
 
-- name: Delete Docker GPG key
+- name: Common Uninstall - Delete Docker GPG key
   apt_key:
     url: https://download.docker.com/linux/ubuntu/gpg
     state: absent
 
-- name: Remove sysctl params for Kubernetes
+- name: Common Uninstall - Remove sysctl params for Kubernetes
   lineinfile:
     path: /etc/sysctl.d/99-kubernetes-cri.conf
     state: absent
@@ -33,37 +33,37 @@
     - 'net.ipv4.ip_forward                 = 1'
     - 'net.bridge.bridge-nf-call-ip6tables = 1'
 
-- name: Delete Kubernetes sysctl params file
+- name: Common Uninstall - Delete Kubernetes sysctl params file
   file:
     path: /etc/sysctl.d/99-kubernetes-cri.conf
     state: absent
 
-- name: Check if modules configuration file exists
+- name: Common Uninstall - Check if modules configuration file exists
   stat:
     path: "{{ containerd.file_path_modules }}"
   register: modules_file_stat
 
-- name: Remove modules configuration for Containerd
+- name: Common Uninstall - Remove modules configuration for Containerd
   file:
     path: "{{ containerd.file_path_modules }}"
     state: absent
   when: modules_file_stat.stat.exists
 
-- name: Delete empty file for Containerd module
+- name: Common Uninstall - Delete empty file for Containerd module
   file:
     path: "{{ containerd.file_path_modules }}"
     state: absent
 
-- name: Remove SWAP line in fstab (Kubeadm requirement)
+- name: Common Uninstall - Remove SWAP line in fstab (Kubeadm requirement)
   replace:
     path: /etc/fstab
     regexp: '^# ([^#].*?\sswap\s+sw\s+.*)$'
     replace: '\1'
 
-- name: Enable system SWAP
+- name: Common Uninstall - Enable system SWAP
   shell: "swapon -a"
 
-- name: Remove APT packages
+- name: Common Uninstall - Remove APT packages
   apt:
     name: "{{ item }}"
     state: absent

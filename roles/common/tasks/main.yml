@@ -1,14 +1,14 @@
 ---
-- name: "Gather the package facts"
+- name: Common - Gather the package facts
   package_facts:
     manager: "auto"
 
-- name: "Update package lists"
+- name: Common - Update package lists
   apt:
     update_cache: true
     force_apt_get: true
 
-- name: Install APT Transport HTTPS
+- name: Common - Install APT Transport HTTPS
   apt:
     name: "{{ item }}"
     update_cache: yes
@@ -22,35 +22,35 @@
     - software-properties-common
     - lsb-release
 
-- name: Disable system SWAP
+- name: Common - Disable system SWAP
   shell: "swapoff -a"
 
-- name: disable SWAP in fstab (Kubeadm requirement)
+- name: Common - Disable SWAP in fstab (Kubeadm requirement)
   replace:
     path: /etc/fstab
     regexp: '^([^#].*?\sswap\s+sw\s+.*)$'
     replace: '# \1'
 
-- name: create an empty file for the Containerd module
+- name: Common - create an empty file for the Containerd module
   copy:
     content: ""
     dest: "{{ containerd.file_path_modules }}"
     force: no
 
-- name: configure modules for Containerd
+- name: Common - configure modules for Containerd
   blockinfile:
     path: "{{ containerd.file_path_modules }}"
     block: |
          overlay
          br_netfilter
 
-- name: create an empty file for Kubernetes sysctl params
+- name: Common - create an empty file for Kubernetes sysctl params
   copy:
     content: ""
     dest: /etc/sysctl.d/99-kubernetes-cri.conf
     force: no
 
-- name: configure sysctl params for Kubernetes
+- name: Common - configure sysctl params for Kubernetes
   lineinfile:
     path: /etc/sysctl.d/99-kubernetes-cri.conf
     line: "{{ item }}"
@@ -59,42 +59,42 @@
     - 'net.ipv4.ip_forward                 = 1'
     - 'net.bridge.bridge-nf-call-ip6tables = 1'
 
-- name: Apply sysctl params without reboot
+- name: Common - Apply sysctl params without reboot
   command: sysctl --system
 
 #################### Containerd ################
-- name: Add Docker GPG key
+- name: Common - Add Docker GPG key
   apt_key:
     url: https://download.docker.com/linux/ubuntu/gpg
     state: present
 
-- name: add Docker's APT repository
+- name: Common - add Docker's APT repository
   apt_repository:
-    repo: "deb [arch={{ 'amd64' if ansible_architecture == 'x86_64' else 'arm64' }}] https://download.docker.com/linux/{{ansible_distribution|lower}} {{ansible_distribution_release}} stable"
+    repo: "deb [arch=amd64] https://download.docker.com/linux/{{ ansible.ansible_distribution|lower }} {{ ansible.ansible_distribution_release }} stable"
     filename: "docker"
     state: present
     update_cache: yes
 
 #################### Kubernetes ################
-- name: Prepare apt keyring directory.
+- name: Common - Prepare apt keyring directory.
   file:
     path: "{{ kubernetes.kubernetes_keyring_file | dirname }}"
     state: directory
     mode: 0755
 
-- name: Get Kubernetes apt key.
+- name: Common - Get Kubernetes apt key.
   get_url:
     url: "https://pkgs.k8s.io/core:/{{ kubernetes.kubernetes_release_channel }}:/v{{ kubernetes.kubernetes_version }}/deb/Release.key"
     dest: "{{ kubernetes.kubernetes_keyring_file }}"
     mode: '0644'
     force: true
 
-- name: Be sure deprecated Kubernetes repository is absent.
+- name: Common - Be sure deprecated Kubernetes repository is absent.
   file:
     path: "/etc/apt/sources.list.d/apt_kubernetes_io.list"
     state: absent
 
-- name: Add Kubernetes repository.
+- name: Common - Add Kubernetes repository.
   apt_repository:
     repo: "deb [signed-by={{ kubernetes.kubernetes_keyring_file }}] https://pkgs.k8s.io/core:/{{ kubernetes.kubernetes_release_channel }}:/v{{ kubernetes.kubernetes_version }}/deb/ /"
     filename: kubernetes
@@ -102,7 +102,9 @@
     update_cache: true
 
 ############# uninstall common ##################
-- name: uninstall
-  import_tasks: uninstall.yml
+- include_tasks:
+    file: uninstall.yml
+    apply:
+      tags: uninstall-common
   tags: [uninstall-common]
   when: "'uninstall-common' in ansible_run_tags"
