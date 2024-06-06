@@ -1,3 +1,7 @@
+ansible:
+  ansible_distribution: ubuntu
+  ansible_distribution_release: focal
+
 lb:
   lb_path_enabled: "/etc/nginx/sites-enabled/"
   lb_path_conf: "/etc/nginx/conf.d/"

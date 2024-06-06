@@ -1,16 +1,18 @@
 ---
-- name: "Gather the package facts"
+- name: Containerd - Gather the package facts"
   package_facts:
     manager: "auto"
 
-- name: install Containerd
+- name: Containerd - install Containerd
   apt:
+    name: "{{ item }}"
     state: present
     force_apt_get: true
   when: "'{{ item }}' not in ansible_facts.packages"
   loop:
     - containerd.io
-    - docker-ce
+    # - docker-ce-cli
+    # - docker-ce
 
 - name: create containerd directory
   file:
@@ -18,7 +20,7 @@
     state: directory
 
 - name: add containerd configuration
-  shell: /usr/bin/containerd config default > /etc/containerd/config.toml
+  shell: containerd config default > /etc/containerd/config.toml
 
 - name: configuring the systemd cgroup driver for Containerd
   shell: sudo sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
