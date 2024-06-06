@@ -1,15 +1,23 @@
 ---
-
-- name: If nfs-server is present
-  include_tasks: nfs-server.yml
+# NFS - Volumes
+- include_tasks: nfs-server.yml
   when: inventory_hostname in groups['nfs_server']
-  loop: "{{ nfs_configurations }}"
 
-- name: If nfs-clients is present
-  include_tasks: nfs-clients.yml
+- include_tasks: nfs-clients.yml
   when: inventory_hostname in groups['worker']
-  loop: "{{ nfs_configurations }}"
 
-- name: Deploy StorageClass
-  include_tasks: storageclass.yml
-  when: inventory_hostname in groups['master']
+- include_tasks: 
+    file: storageclass.yml
+    apply:
+      tags: k8s-nfs
+  tags: k8s-nfs
+  when:
+    - inventory_hostname in groups['master']
+    - "'k8s-nfs' in ansible_run_tags"
+
+- include_tasks: 
+    file: uninstall.yml
+    apply:
+      tags: uninstall-nfs
+  tags: uninstall-nfs
+  when: "'uninstall-nfs' in ansible_run_tags"

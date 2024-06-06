@@ -1,9 +1,14 @@
 ---
-- name: Reset kubeadm
-  shell: kubeadm reset
+- name: Check if kubeadm is installed
+  command: kubeadm version
   ignore_errors: yes
-  args:
-    force: yes
+  register: kubeadm_version
+  changed_when: false
+
+- name: Reset Kubernetes component
+  shell: "kubeadm reset --force --cri-socket=/var/run/{{ containerd.container_runtime }}/{{ containerd.container_runtime }}.sock"
+  ignore_errors: True
+  when: kubeadm_version|failed or kubeadm_version.stdout is not search('kubeadm version')
 
 - name: Remove Kubernetes related packages
   apt:
@@ -21,10 +26,19 @@
   args:
     force: yes
 
+- name: Remove Docker containers/ps
+  shell: |
+    docker rm -v -f $(docker ps -qa)
+  ignore_errors: yes
+
+- name: Remove Docker containers/volumes
+  shell: |
+    docker rm -vf $(docker ps -aq)
+  ignore_errors: yes
+
 - name: Remove Docker containers/images
   shell: |
-    docker image prune -a
-    systemctl restart docker
+    docker rmi -f $(docker images -aq)
   ignore_errors: yes
 
 - name: Remove Docker packages
@@ -53,7 +67,7 @@
     path: "{{ item }}"
     state: absent
   with_items:
-    - "{{ ansible_env.HOME }}/.kube"
+    - "~/.kube"
     - "/etc/cni/"
     - "/etc/kubernetes/"
     - "/var/lib/dockershim"

@@ -12,40 +12,36 @@
 
 - name: Ensure tests
   hosts: [ master ] 
-  become: true
   roles:
     - { role: tests, tags: hello }
 
+- name: Setup NFS
+  hosts: [ nfs ]
+  roles:
+    - { role: nfs, tags: nfs,uninstall-nfs }
+
 - name: Ensure Nginx
   hosts: [ lb ] 
-  become: true
   roles:
     - { role: loadbalancer, tags: nginx,uninstall-nginx }
 
 - name: Ensure common
   hosts: [ master ] 
-  become: true
   roles:
     - { role: common, tags: common,uninstall-common }
     - { role: containerd, tags: docker }
 
 - name: Deploy Cluster K8s
   hosts: [cluster]
-  become: true
   roles:
     - { role: kubernetes, tags: k8s,uninstall-cluster }
 
 - name: Setup Component
-  hosts: [master]
-  become: true
+  hosts: ["master[0]"]
+  run_once: true
   roles:
     - { role: cni, tags: cni-flannel,cni-calico }
     - { role: cert-manager, tags: cert }
     - { role: metallb, tags: metallb }
     - { role: ingress-nginx, tags: ingress }
-
-- name: Setup NFS
-  hosts: [master:cluster]
-  become: true
-  roles:
-    - { role: nfs, tags: nfs }
+    - { role: nfs, tags: k8s-nfs, when: "'uninstall-nfs' not in ansible_run_tags" }

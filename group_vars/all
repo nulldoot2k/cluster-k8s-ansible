@@ -3,6 +3,7 @@ lb:
   lb_path_conf: "/etc/nginx/conf.d/"
 
 containerd:
+  container_runtime: containerd
   file_path_conf: "/etc/containerd/"
   file_path_modules: "/etc/modules-load.d/containerd.conf"
 
@@ -46,16 +47,18 @@ nfs:
   nfs_disk_location:
   nfs_client_mnt_options: 
   nfs_client_mnt_state: mounted
-  nfs_export: "/data/nfs_server"
-  nfs_client_mnt_point: "/data/nfs_client"
+  nfs_export: "/mnt/nfs/promdata"
+  nfs_client_mnt_point: "/mnt/nfs/promdata"
   nfs_path_tmp: "/tmp/nfs/" # folder contain script deploy storageclass from server master
   server: "{{ inventory_hostname in groups['nfs_server'] }}"
   clients: "{{ inventory_hostname in groups['worker'] }}"
 nfs_storage:
   whitelist_ips: 
     - 192.168.101.0/24
+    - 10.3.52.0/22
     - 10.0.2.0/24
   archive_delete: "false"
   storageclass_name: managed-nfs-storage
   deployment_name: nfs-client-provisioner
   provisioner: k8s-sigs.io/nfs-subdir-external-provisioner
+
