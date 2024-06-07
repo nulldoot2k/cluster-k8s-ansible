@@ -10,11 +10,6 @@
       default: "{{ groups | join(',') }}"
       private: no
 
-- name: Ensure tests
-  hosts: [ master ] 
-  roles:
-    - { role: tests, tags: hello }
-
 - name: Setup NFS
   hosts: [ nfs ]
   roles:
@@ -25,6 +20,11 @@
   roles:
     - { role: loadbalancer, tags: nginx }
 
+- name: Ensure cfssl
+  hosts: [ master ] 
+  roles:
+    - { role: etcd, tags: cfssl }
+
 - name: Ensure common
   hosts: [ master ] 
   roles:
@@ -32,9 +32,11 @@
     - { role: containerd, tags: containerd }
 
 - name: Deploy Cluster K8s
-  hosts: [cluster]
+  tags: [k8s,init,join-master,join-worker]
+  hosts: [master]
   roles:
-    - { role: kubernetes, tags: k8s }
+    - { role: kubernetes }
+    - { role: etcd, tags: gen-certs,copy-certs, when: "'cfssl' in ansible_run_tags" }
 
 - name: Setup Component
   hosts: ["master[0]"]
@@ -48,9 +50,10 @@
 
 - name: Uninstall
   tags:
+    - uninstall
+    - uninstall-kubernetes
+    - uninstall-containerd
     - uninstall-nginx
     - uninstall-common
-    - uninstall-containerd
-    - uninstall-kubernetes
   hosts: [ all ]
   roles: [ uninstall ]

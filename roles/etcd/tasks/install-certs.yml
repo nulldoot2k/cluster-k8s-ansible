@@ -1,0 +1,28 @@
+---
+- name: Cfssl - Set cfssl_checksum_url_fact
+  set_fact:
+    cfssl_checksum_url: "https://github.com/cloudflare/cfssl/releases/download/v{{ cfssl.cfssl_version }}/cfssl_{{ cfssl.cfssl_version }}_checksums.txt"
+
+- name: Cfssl - Check if cfssl binaries exist
+  find:
+    paths: "{{ cfssl.cfssl_bin_directory }}"
+    patterns:
+      - "cfssl*"
+  register: cfssl_binaries
+
+- name: Cfssl - Downloading cfssl binaries
+  get_url:
+    url: "https://github.com/cloudflare/cfssl/releases/download/v{{ cfssl.cfssl_version }}/{{ item }}_{{ cfssl.cfssl_version }}_{{ cfssl.cfssl_os }}_{{ cfssl.cfssl_arch }}"
+    dest: "{{ cfssl.cfssl_bin_directory }}/{{ item }}"
+    mode: 0755
+    checksum: "sha256:{{ cfssl_checksum_url }}"
+  with_items:
+    - cfssl
+    - cfssl-bundle
+    - cfssl-certinfo
+    - cfssl-newkey
+    - cfssl-scan
+    - cfssljson
+    - mkbundle
+    - multirootca
+  when: cfssl_binaries.matched == 0

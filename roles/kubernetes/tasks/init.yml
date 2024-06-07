@@ -1,13 +1,13 @@
 ---
-- name: Create an empty file for Kubeadm configuring
+- name: Kubernetes Init - Create an empty configuring
   copy:
     content: ""
-    dest: "{{ kubernetes.file_config }}"
+    dest: "{{ kubernetes.kube_config_file }}"
     force: no
 
-- name: Configuring the container runtime including its cgroup driver
+- name: Kubernetes Init - Configuring templates
   blockinfile:
-    path: "{{ kubernetes.file_config }}"
+    path: "{{ kubernetes.kube_config_file }}"
     block: |
          kind: ClusterConfiguration
          apiVersion: kubeadm.k8s.io/v1beta3
@@ -27,20 +27,20 @@
          enforceNodeAllocatable:
          - pods
 
-- name: Initialize the cluster (this could take some time)
-  shell: "kubeadm init --config {{ kubernetes.file_config }} >> {{ kubernetes.logs_cluster }}"
+- name: Kubernetes Init - Initialize the cluster (this could take some time)
+  shell: "kubeadm init --config {{ kubernetes.kube_config_file }} >> {{ kubernetes.logs_cluster }}"
   args:
     chdir: /root/
     creates: "{{ kubernetes.logs_cluster }}"
 
-- name: Create .kube directory
+- name: Kubernetes Init - Create .kube directory
   file:
     path: "{{ kubernetes.config }}"
     state: directory
     mode: 0755
 
-- name: Copy admin.conf to user's kube config
+- name: Kubernetes Init - Copy admin.conf to user's kube config
   copy:
-    src: "{{ kubernetes.file_admin_config }}"
+    src: "{{ kubernetes.kube_config_admin }}"
     dest: "{{ kubernetes.config }}/config"
     remote_src: yes

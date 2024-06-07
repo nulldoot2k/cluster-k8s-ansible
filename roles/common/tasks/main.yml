@@ -11,17 +11,19 @@
 - name: Common - Install APT Transport HTTPS
   apt:
     name: "{{ item }}"
+    state: latest
     update_cache: yes
-  when: "'{{ item }}' not in ansible_facts.packages"
   loop: 
     - apt-transport-https
     - ca-certificates
     - curl
-    - gnupg2
-    - apt-utils
+    - gnupg
     - software-properties-common
+    - apt-utils
     - lsb-release
+  when: "'{{ item }}' not in ansible_facts.packages"
 
+# sys container
 - name: Common - Disable system SWAP
   shell: "swapoff -a"
 
@@ -34,30 +36,33 @@
 - name: Common - create an empty file for the Containerd module
   copy:
     content: ""
-    dest: "{{ containerd.file_path_modules }}"
+    dest: "{{ containerd.container_module_conf }}"
     force: no
 
 - name: Common - configure modules for Containerd
   blockinfile:
-    path: "{{ containerd.file_path_modules }}"
+    path: "{{ containerd.container_module_conf }}"
     block: |
          overlay
          br_netfilter
+# end
 
+# sys kubernetes
 - name: Common - create an empty file for Kubernetes sysctl params
   copy:
     content: ""
-    dest: /etc/sysctl.d/99-kubernetes-cri.conf
+    dest: "{{ kubernetes.kube_sysctl_conf }}"
     force: no
 
 - name: Common - configure sysctl params for Kubernetes
   lineinfile:
-    path: /etc/sysctl.d/99-kubernetes-cri.conf
+    path: "{{ kubernetes.kube_sysctl_conf }}"
     line: "{{ item }}"
   with_items:
     - 'net.bridge.bridge-nf-call-iptables  = 1'
     - 'net.ipv4.ip_forward                 = 1'
     - 'net.bridge.bridge-nf-call-ip6tables = 1'
+# end
 
 - name: Common - Apply sysctl params without reboot
   command: sysctl --system
@@ -71,7 +76,7 @@
 - name: Common - add Docker's APT repository
   apt_repository:
     repo: "deb [arch=amd64] https://download.docker.com/linux/{{ ansible.ansible_distribution|lower }} {{ ansible.ansible_distribution_release }} stable"
-    filename: "docker"
+    filename: "{{ containerd.name }}"
     state: present
     update_cache: yes
 
@@ -91,12 +96,12 @@
 
 - name: Common - Be sure deprecated Kubernetes repository is absent.
   file:
-    path: "/etc/apt/sources.list.d/apt_kubernetes_io.list"
+    path: "{{ kubernetes.kube_repo_file }}"
     state: absent
 
 - name: Common - Add Kubernetes repository.
   apt_repository:
     repo: "deb [signed-by={{ kubernetes.kubernetes_keyring_file }}] https://pkgs.k8s.io/core:/{{ kubernetes.kubernetes_release_channel }}:/v{{ kubernetes.kubernetes_version }}/deb/ /"
-    filename: kubernetes
+    filename: "{{ kubernetes.name }}"
     state: present
     update_cache: true

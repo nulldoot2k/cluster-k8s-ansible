@@ -8,13 +8,13 @@
     name: "{{ item }}"
     state: present
     force_apt_get: true
-  when: "'{{ item }}' not in ansible_facts.packages"
   loop:
     - containerd.io
+  when: "'{{ item }}' not in ansible_facts.packages"
 
 - name: Containerd - create containerd directory
   file:
-    path: "{{ containerd.file_path_conf }}"
+    path: "{{ containerd.container_path_conf }}"
     state: directory
 
 - name: Containerd - add containerd configuration

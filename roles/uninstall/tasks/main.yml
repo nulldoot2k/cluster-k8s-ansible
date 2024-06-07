@@ -9,13 +9,13 @@
     - inventory_hostname in groups['lb']
 
 - include_tasks:
-    file: uninstall-common.yml
+    file: uninstall-kubernetes.yml
     apply:
-      tags: uninstall-common
-  tags: [uninstall-common]
-  when: 
-    - "'uninstall-common' in ansible_run_tags"
-    - inventory_hostname in groups['cluster']
+      tags: uninstall-kubernetes
+  tags: [uninstall-kubernetes]
+  when:
+    - "'uninstall-kubernetes' in ansible_run_tags"
+    - inventory_hostname in groups['master']
 
 - include_tasks:
     file: uninstall-containerd.yml
@@ -27,13 +27,13 @@
     - inventory_hostname in groups['master']
 
 - include_tasks:
-    file: uninstall-kubernetes.yml
+    file: uninstall-common.yml
     apply:
-      tags: uninstall-kubernetes
-  tags: [uninstall-kubernetes]
-  when:
-    - "'uninstall-kubernetes' in ansible_run_tags"
-    - inventory_hostname in groups['cluster']
+      tags: uninstall-common
+  tags: [uninstall-common]
+  when: 
+    - "'uninstall-common' in ansible_run_tags"
+    - inventory_hostname in groups['master']
 
 - include_tasks: 
     file: uninstall-nfs.yml

@@ -8,12 +8,14 @@ lb:
   lb_path_conf: "/etc/nginx/conf.d/"
 
 containerd:
+  name: containerd
   container_runtime: containerd
-  file_path_conf: "/etc/containerd/"
-  file_path_list: "/etc/apt/sources.list.d/docker.list"
-  file_path_modules: "/etc/modules-load.d/containerd.conf"
+  container_path_conf: "/etc/containerd/"
+  container_repo_list: "/etc/apt/sources.list.d/containerd.list"
+  container_module_conf: "/etc/modules-load.d/containerd.conf"
 
 kubernetes:
+  name: kubernetes
   kubernetes_version: "1.28"
   version: "1.28.*"
   CIDR: "10.244.0.0/16"
@@ -22,12 +24,23 @@ kubernetes:
   config: "/{{ ansible_user }}/.kube"
   kubernetes_keyring_file: "/etc/apt/keyrings/kubernetes-apt-keyring.asc"
   kubernetes_release_channel: "stable"
-  file_config: "/etc/kubernetes/kubeadm-config.yaml"
-  file_admin_config: "/etc/kubernetes/admin.conf"
+  kube_config_file: "/etc/kubernetes/kubeadm-config.yaml"
+  kube_repo_file: "/etc/apt/sources.list.d/kubernetes.list"
+  kube_config_admin: "/etc/kubernetes/admin.conf"
+  kube_sysctl_conf: "/etc/sysctl.d/99-kubernetes-cri.conf"
+  kube_config_dir: "/etc/kubernetes"
+  kube_cert_dir: "/etc/kubernetes/pki"
+  kube_etcd_ca_dir: "/etc/kubernetes/pki/etcd"
   logs_cluster: "cluster_initialized.log"
   logs_pods_flannel: "pod_network_setup_flannel.log"
   logs_pods_calico: "pod_network_setup_calico.log"
   logs_nodes: "node_joined.log"
+
+cfssl:
+  cfssl_version: "1.6.5"
+  cfssl_bin_directory: "/usr/local/bin"
+  cfssl_os: "linux"
+  cfssl_arch: "amd64"
 
 cert_manager:
   version: "v1.13.3"
@@ -61,7 +74,6 @@ nfs:
 nfs_storage:
   whitelist_ips: 
     - 192.168.101.0/24
-    - 10.3.52.0/22
     - 10.0.2.0/24
   archive_delete: "false"
   storageclass_name: managed-nfs-storage

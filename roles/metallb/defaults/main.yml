@@ -1,3 +1,2 @@
-metallb:
-  addresses: 
-  version: ""
+---
+# defailt
