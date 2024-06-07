@@ -48,9 +48,9 @@
 
 - name: Uninstall
   tags:
+    - uninstall-kubernetes
+    - uninstall-containerd
     - uninstall-nginx
     - uninstall-common
-    - uninstall-containerd
-    - uninstall-kubernetes
   hosts: [ all ]
   roles: [ uninstall ]

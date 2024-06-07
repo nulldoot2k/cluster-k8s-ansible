@@ -1,7 +1,7 @@
 ---
 - name: Check if kubeadm is installed
   command: kubeadm version
-  ignore_errors: yes
+  ignore_errors: True
   register: kubeadm_version
   changed_when: false
 
@@ -9,6 +9,8 @@
   shell: "kubeadm reset --force --cri-socket=/var/run/{{ containerd.container_runtime }}/{{ containerd.container_runtime }}.sock"
   ignore_errors: True
   when: kubeadm_version|failed or kubeadm_version.stdout is not search('kubeadm version')
+
+
 
 - name: Remove Kubernetes related packages
   apt:
@@ -26,17 +28,17 @@
   args:
     force: yes
 
-- name: Remove Docker containers/ps
+- name: Remove containers/ps
   shell: |
     docker rm -v -f $(docker ps -qa)
   ignore_errors: yes
 
-- name: Remove Docker containers/volumes
+- name: Remove containers/volumes
   shell: |
     docker rm -vf $(docker ps -aq)
   ignore_errors: yes
 
-- name: Remove Docker containers/images
+- name: Remove containers/images
   shell: |
     docker rmi -f $(docker images -aq)
   ignore_errors: yes
@@ -80,7 +82,7 @@
     - "/var/run/docker.sock"
   ignore_errors: yes
 
-- name: Remove Docker group (optional)
+- name: Remove group container (optional)
   group:
     name: docker
     state: absent

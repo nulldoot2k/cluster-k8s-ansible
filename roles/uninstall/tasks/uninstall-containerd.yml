@@ -19,6 +19,7 @@
     - /etc/docker
     - /var/lib/containerd
     - /var/lib/docker
+  ignore_errors: True
 
 - name: Uninstall containerd - Reload systemd daemon
   systemd:

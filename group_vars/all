@@ -8,12 +8,14 @@ lb:
   lb_path_conf: "/etc/nginx/conf.d/"
 
 containerd:
+  name: containerd
   container_runtime: containerd
   file_path_conf: "/etc/containerd/"
-  file_path_list: "/etc/apt/sources.list.d/docker.list"
+  file_path_list: "/etc/apt/sources.list.d/containerd.list"
   file_path_modules: "/etc/modules-load.d/containerd.conf"
 
 kubernetes:
+  name: kubernetes
   kubernetes_version: "1.28"
   version: "1.28.*"
   CIDR: "10.244.0.0/16"
@@ -23,7 +25,9 @@ kubernetes:
   kubernetes_keyring_file: "/etc/apt/keyrings/kubernetes-apt-keyring.asc"
   kubernetes_release_channel: "stable"
   file_config: "/etc/kubernetes/kubeadm-config.yaml"
+  file_path_list: "/etc/apt/sources.list.d/kubernetes.list"
   file_admin_config: "/etc/kubernetes/admin.conf"
+  file_path_sysctl: "/etc/sysctl.d/99-kubernetes-cri.conf"
   logs_cluster: "cluster_initialized.log"
   logs_pods_flannel: "pod_network_setup_flannel.log"
   logs_pods_calico: "pod_network_setup_calico.log"
