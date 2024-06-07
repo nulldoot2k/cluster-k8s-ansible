@@ -36,12 +36,12 @@
 - name: Common - create an empty file for the Containerd module
   copy:
     content: ""
-    dest: "{{ containerd.file_path_modules }}"
+    dest: "{{ containerd.container_module_conf }}"
     force: no
 
 - name: Common - configure modules for Containerd
   blockinfile:
-    path: "{{ containerd.file_path_modules }}"
+    path: "{{ containerd.container_module_conf }}"
     block: |
          overlay
          br_netfilter
@@ -51,12 +51,12 @@
 - name: Common - create an empty file for Kubernetes sysctl params
   copy:
     content: ""
-    dest: "{{ kubernetes.file_path_sysctl }}"
+    dest: "{{ kubernetes.kube_sysctl_conf }}"
     force: no
 
 - name: Common - configure sysctl params for Kubernetes
   lineinfile:
-    path: "{{ kubernetes.file_path_sysctl }}"
+    path: "{{ kubernetes.kube_sysctl_conf }}"
     line: "{{ item }}"
   with_items:
     - 'net.bridge.bridge-nf-call-iptables  = 1'
@@ -96,7 +96,7 @@
 
 - name: Common - Be sure deprecated Kubernetes repository is absent.
   file:
-    path: "{{ kubernetes.file_path_list }}"
+    path: "{{ kubernetes.kube_repo_file }}"
     state: absent
 
 - name: Common - Add Kubernetes repository.

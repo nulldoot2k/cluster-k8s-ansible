@@ -1,5 +1,5 @@
 ---
-- name: Install Kubernetes components
+- name: Kubernetes - Install Kubernetes components
   apt:
     name:
       - "kubelet={{ kubernetes.version }}"
@@ -8,14 +8,14 @@
     update_cache: yes
   notify: enable kubelet
 
-- name: Hold version
+- name: Kubernetes - Hold version
   shell: "sudo apt-mark hold kubelet kubeadm kubectl"
 
-- name: Check Kubelet args in Kubelet config
+- name: Kubernetes - Check Kubelet args in Kubelet config
   shell: grep "^Environment=\"KUBELET_EXTRA_ARGS=" /usr/lib/systemd/system/kubelet.service.d/10-kubeadm.conf || true
   register: check_args
 
-- name: Add runtime args in Kubelet config
+- name: Kubernetes - Add runtime args in Kubelet config
   lineinfile:
     dest: "/usr/lib/systemd/system/kubelet.service.d/10-kubeadm.conf"
     line: 'Environment="KUBELET_EXTRA_ARGS= --runtime-cgroups=/system.slice/containerd.service --container-runtime-endpoint=unix:///run/containerd/containerd.sock"'

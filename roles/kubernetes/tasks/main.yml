@@ -1,13 +1,29 @@
 ---
-- name: Include main tasks
-  import_tasks: k8s.yml
+- include_tasks: k8s.yml
 
-- name: Init Master
-  import_tasks: master.yml
-  when: inventory_hostname in groups['master'][0]
+- include_tasks:
+    file: init.yml
+    apply:
+      tags: init
+  tags: init
+  when: 
+    - inventory_hostname in groups['master'][0]
+    - "'init' in ansible_run_tags"
 
-- name: Join Master
-  import_tasks: master-add.yml
+- include_tasks:
+    file: master.yml
+    apply:
+      tags: join-master
+  tags: join-master
+  when: 
+    - inventory_hostname in groups['master']
+    - "'join-master' in ansible_run_tags"
 
-- name: Join Worker
-  import_tasks: worker.yml
+- include_tasks: 
+    file: worker.yml
+    apply:
+      tags: join-worker
+  tags: join-worker
+  when: 
+    - inventory_hostname in groups['master']
+    - "'join-worker' in ansible_run_tags"

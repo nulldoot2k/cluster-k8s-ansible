@@ -1,0 +1,22 @@
+---
+# tasks file for etcd
+- include_tasks: install-certs.yml
+  when: "inventory_hostname in groups['master'][0]"
+
+- include_tasks:
+    file: generate-etcd-certs.yml
+    apply:
+      tags: gen-certs
+  tags: gen-certs
+  when: 
+    - inventory_hostname in groups['master'][0]
+    - "'gen-certs' in ansible_run_tags"
+
+- include_tasks:
+    file: copy-etcd-certs.yml
+    apply:
+      tags: copy-certs
+  tags: copy-certs
+  when: 
+    - inventory_hostname not in groups['master'][0]
+    - "'copy-certs' in ansible_run_tags"

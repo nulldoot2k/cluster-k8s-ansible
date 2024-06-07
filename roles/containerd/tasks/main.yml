@@ -14,7 +14,7 @@
 
 - name: Containerd - create containerd directory
   file:
-    path: "{{ containerd.file_path_conf }}"
+    path: "{{ containerd.container_path_conf }}"
     state: directory
 
 - name: Containerd - add containerd configuration

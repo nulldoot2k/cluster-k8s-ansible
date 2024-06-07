@@ -17,16 +17,23 @@
 - Ansible: An open source IT automation engine.
 - ContainerD: An industry-standard container runtime.
 - Kubernetes: An open-source system for automating deployment, scaling, and management of containerized applications.
-- Plannel: An open source networking and network security solution for containers (CNI).
+- Flannel: An open source networking and network security solution for containers (CNI).
+- Calico An open source networking and network security solution same Flannel.
 - MetalLB: A bare metal load-balancer for Kubernetes.
 - Nginx: An Ingress controller.
+- Etcd v3.3.4
+- Helm v2.9.1
+- Nginx-ingress-controller v0.14.0
+- Prometheus v2.3.2
 
 ## Requirements
 
-1. A Linux machine with a superuser privileges and pre-installed Ansible.
-2. Ubuntu machines that are intended to become part of the new Kubernetes cluster. 
-3. 2VCpu/Mem for Nodes
-4. Ubuntu jammy 20.04.2 LTS
+1. The cluster requires at least 4 servers, bare-metal or virtual, with Ubuntu 20.04 LTS X installed. 
+2. All servers are in the same network and able to see each other.
+3. An Ansible Server has to be setup in the same network with Ansible v2.4 (or later) and python-netaddr installed.
+4. Internet access is available for all servers to download software binaries.
+5. Password-less SSH has to be enabled for the root user on all servers except the Ansible Server
+6. Root user remote login has to be enabled on all servers except the Ansible Server.
 
 Make sure that your SSH key is already installed on the machines by running the following command:
 

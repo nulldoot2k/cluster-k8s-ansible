@@ -1,0 +1,11 @@
+---
+- name: ETCD - Creates /etc/kubernetes/pki/etcd directory
+  file:
+    path: /etc/kubernetes/pki/etcd
+    state: directory
+
+- name: ETCD - Copy ca-cert config files
+  copy:
+    src: "{{ role_path }}/files/cert-updates/"
+    dest: "{{ kubernetes.kube_etcd_ca_dir }}"
+    directory_mode: true

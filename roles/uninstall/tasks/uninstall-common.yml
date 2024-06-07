@@ -10,12 +10,12 @@
 
 - name: Common Uninstall - Remove Kubernetes repository
   file:
-    path: "{{ kubernetes.file_path_list }}"
+    path: "{{ kubernetes.kube_repo_file }}"
     state: absent
 
 - name: Common Uninstall - Remove Container repository
   file:
-    path: "{{ containerd.file_path_list }}"
+    path: "{{ containerd.container_repo_list }}"
     state: absent
 
 - name: Common Uninstall - Delete Container GPG key
@@ -26,18 +26,18 @@
 # Check file modules config container exists
 - name: Common Uninstall - Check if modules configuration file exists
   stat:
-    path: "{{ containerd.file_path_modules }}"
+    path: "{{ containerd.container_module_conf }}"
   register: modules_file_stat
 
 - name: Common Uninstall - Remove modules configuration for Containerd
   file:
-    path: "{{ containerd.file_path_modules }}"
+    path: "{{ containerd.container_module_conf }}"
     state: absent
   when: modules_file_stat.stat.exists
 
 - name: Common Uninstall - Delete empty file for Containerd module
   file:
-    path: "{{ containerd.file_path_modules }}"
+    path: "{{ containerd.container_module_conf}"
     state: absent
 # end
 
@@ -52,7 +52,7 @@
 
 - name: Common Uninstall - Delete Kubernetes sysctl params file
   file:
-    path: "{{ kubernetes.file_path_sysctl }}"
+    path: "{{ kubernetes.kube_sysctl_conf }}"
     state: absent
 
 # uninstall package
