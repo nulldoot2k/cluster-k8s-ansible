@@ -18,25 +18,24 @@
 - name: Ensure Nginx
   hosts: [ lb ] 
   roles:
-    - { role: loadbalancer, tags: nginx }
+    - { role: loadbalancer, tags: lb }
 
 - name: Ensure cfssl
-  hosts: [ master ] 
+  hosts: [localhost:master]
   roles:
-    - { role: etcd, tags: cfssl }
+    - { role: cert-cfssl, tags: cfssl,gen-certs,sync-certs }
 
 - name: Ensure common
-  hosts: [ master ] 
+  hosts: [ cluster ]
   roles:
     - { role: common, tags: common }
     - { role: containerd, tags: containerd }
 
 - name: Deploy Cluster K8s
-  tags: [k8s,init,join-master,join-worker]
-  hosts: [master]
+  hosts: [cluster]
   roles:
-    - { role: kubernetes }
-    - { role: etcd, tags: gen-certs,copy-certs, when: "'cfssl' in ansible_run_tags" }
+    - { role: kubernetes, tags: k8s,k8s-init,join-master,join-worker}
+    - { role: etcd, tags: etcd, when: "inventory_hostname in groups['master']" }
 
 - name: Setup Component
   hosts: ["master[0]"]

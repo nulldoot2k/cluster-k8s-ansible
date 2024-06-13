@@ -8,6 +8,7 @@
 
 - [Stack](#stack) 
 - [Requirements](#requirements) 
+- [Prerequisites](#prerequisites)
 - [Usage](#usage) 
 - [Test Nginx](#test-nginx) 
 - [Uninstall Cluster](#uninstall-cluster) 
@@ -39,6 +40,25 @@ Make sure that your SSH key is already installed on the machines by running the 
 
 ```sh
 ssh-copy-id <The remote username>@<The IPv4 address of the remote machine>
+```
+
+## Prerequisites
+
+- VirtualBox: This tutorial leverages the [VirtualBox](https://www.virtualbox.org/) to streamline provisioning of the compute infrastructure required to bootstrap a Kubernetes cluster from the ground up. Click to [download and install VirtualBox](https://www.virtualbox.org/wiki/Downloads).
+
+Use Vagrant to manage virtual machine resources, and use the vagrant-hosts plug-in to manage the **/etc/hosts** file in the virtual machine.
+
+```bash
+vagrant plugin install vagrant-hosts
+```
+
+output
+
+```bash
+Installing the 'vagrant-hosts' plugin. This can take a few minutes...
+Fetching rake-13.2.1.gem
+Removing rake
+Successfully uninstalled rake-13.2.1
 ```
 
 ## Usage

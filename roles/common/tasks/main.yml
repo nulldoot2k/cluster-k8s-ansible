@@ -73,6 +73,12 @@
     url: https://download.docker.com/linux/ubuntu/gpg
     state: present
 
+# fix DEPRECATION section in apt-key
+- name: Common - Copy trusted.gpg
+  copy:
+    src: /etc/apt/trusted.gpg
+    dest: /etc/apt/trusted.gpg.d
+
 - name: Common - add Docker's APT repository
   apt_repository:
     repo: "deb [arch=amd64] https://download.docker.com/linux/{{ ansible.ansible_distribution|lower }} {{ ansible.ansible_distribution_release }} stable"

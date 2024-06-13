@@ -1,18 +1,33 @@
 ---
+- name: Uninstall nginx - Gather the package facts
+  package_facts:
+    manager: "auto"
+
 - name: Uninstall nginx - Stop and disable Nginx service
   service:
     name: nginx
     state: stopped
     enabled: no
 
-- name: Uninstall nginx - Remove Nginx package
+- name: Uninstall nginx - Remove NGINX packages
+  shell: apt-get purge --auto-remove -y nginx
+
+- name: Uninstall nginx - Remove Nginx component package
   apt:
     name: "{{ item }}"
     state: absent
+    update_cache: yes
   loop:
     - nginx
     - nginx-full
     - nginx-common
+  args:
+    force: yes
+  when: "'{{ item }}' in ansible_facts.packages"
+
+- name: Uninstall nginx - Autoremove unused packages
+  apt:
+    autoremove: yes
 
 - name: Uninstall nginx - Remove Nginx configuration files
   file:

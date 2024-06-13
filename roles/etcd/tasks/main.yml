@@ -1,22 +1,43 @@
 ---
 # tasks file for etcd
-- include_tasks: install-certs.yml
-  when: "inventory_hostname in groups['master'][0]"
+- name: ETCD - Downloading etcd
+  get_url:
+    url: "https://github.com/etcd-io/etcd/releases/download/v{{ etcd.etcd_version }}/etcd-v{{ etcd.etcd_version }}-linux-{{ etcd.etcd_architecture }}.tar.gz"
+    dest: "{{ etcd.etcd_download_dir }}/etcd-v{{ etcd.etcd_version }}-linux-{{ etcd.etcd_architecture }}.tar.gz"
+    checksum: "sha256:https://github.com/coreos/etcd/releases/download/v{{ etcd.etcd_version }}/SHA256SUMS"
+    mode: "0710"
 
-- include_tasks:
-    file: generate-etcd-certs.yml
-    apply:
-      tags: gen-certs
-  tags: gen-certs
-  when: 
-    - inventory_hostname in groups['master'][0]
-    - "'gen-certs' in ansible_run_tags"
+- name: ETCD - Unarchive etcd
+  unarchive:
+    src: "{{ etcd.etcd_download_dir }}/etcd-v{{ etcd.etcd_version }}-linux-{{ etcd.etcd_architecture }}.tar.gz"
+    dest: /tmp/
+    remote_src: yes
 
-- include_tasks:
-    file: copy-etcd-certs.yml
-    apply:
-      tags: copy-certs
-  tags: copy-certs
-  when: 
-    - inventory_hostname not in groups['master'][0]
-    - "'copy-certs' in ansible_run_tags"
+- name: ETCD - Create directory etcd
+  file:
+    path: "{{ etcd.etcd_path_conf }}"
+    state: directory
+
+- name: ETCD - Move etcd to destination directory
+  copy:
+    src: "{{ etcd.etcd_download_dir }}/etcd-v{{ etcd.etcd_version }}-linux-{{ etcd.etcd_architecture }}/{{ item }}"
+    dest: "{{ etcd.etcd_path_bin }}"
+    mode: 0710
+    remote_src: yes
+  with_items:
+    - etcd
+    - etcdctl
+    - etcdutl
+
+- name: ETCD - Copy etcd.env config file
+  template:
+    src: etcd.env.j2
+    dest: "{{ etcd.etcd_path_conf }}/etcd.env"
+
+- name: ETCD - Copy etcd config file
+  template:
+    src: etcd.service.j2
+    dest: "{{ etcd.etcd_path_systemd }}/etcd.service"
+  notify:
+    - Reload systemd
+

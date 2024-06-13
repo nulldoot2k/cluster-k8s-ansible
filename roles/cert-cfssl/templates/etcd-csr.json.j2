@@ -1,0 +1,23 @@
+{
+  "CN": "etcd",
+  "hosts": [
+    "localhost",
+    "127.0.0.1",
+    {%- for host in groups['master'] -%}
+    "{{ hostvars[host]['ansible_host'] }}"{% if not loop.last %}, {% endif %}
+    {%- endfor -%}
+  ],
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "GB",
+      "L": "England",
+      "O": "Kubernetes",
+      "OU": "etcd",
+      "ST": "Cambridge"
+    }
+  ]
+}

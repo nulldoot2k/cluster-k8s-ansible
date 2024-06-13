@@ -1,4 +1,17 @@
 ---
+- name: Cfssl - Gather the package facts
+  package_facts:
+    manager: "auto"
+
+- name: Cfssl - Install APT Transport HTTPS
+  apt:
+    name: "{{ item }}"
+    state: latest
+    update_cache: yes
+  loop: 
+    - ca-certificates
+  when: "'{{ item }}' not in ansible_facts.packages"
+
 - name: Cfssl - Set cfssl_checksum_url_fact
   set_fact:
     cfssl_checksum_url: "https://github.com/cloudflare/cfssl/releases/download/v{{ cfssl.cfssl_version }}/cfssl_{{ cfssl.cfssl_version }}_checksums.txt"

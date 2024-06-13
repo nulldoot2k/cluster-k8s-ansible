@@ -1,14 +1,15 @@
 ---
+# kubernetes
 - include_tasks: k8s.yml
 
 - include_tasks:
     file: init.yml
     apply:
-      tags: init
-  tags: init
+      tags: k8s-init
+  tags: k8s-init
   when: 
     - inventory_hostname in groups['master'][0]
-    - "'init' in ansible_run_tags"
+    - "'k8s-init' in ansible_run_tags"
 
 - include_tasks:
     file: master.yml
@@ -25,5 +26,5 @@
       tags: join-worker
   tags: join-worker
   when: 
-    - inventory_hostname in groups['master']
+    - inventory_hostname in groups['worker']
     - "'join-worker' in ansible_run_tags"

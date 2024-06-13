@@ -1,6 +1,9 @@
-NodeScale = 135
-IP_IW = "192.168.101."
-NodeCount = 4
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+IP_IW = "192.168.56."
+Controller = 2
+Worker = 2
 
 def setup_dns(node)
   node.vm.provision "setup-hosts", :type => "shell", :path => "setup/setup-hosts.sh" do |s|
@@ -9,8 +12,17 @@ def setup_dns(node)
   node.vm.provision "setup-dns", :type => "shell", :path => "setup/setup-dns.sh"
 end
 
+def controller_setup(node)
+  node.vm.provision "hearbeat", :type => "shell", :path => "setup/heartbeat.sh"
+end
+
+def worker_setup(node)
+  node.vm.provision "worker-provision", :type => "shell", :path => "setup/worker-provision.sh"
+end
+
 Vagrant.configure("2") do |config|
-  config.vm.boot_timeout = 300
+  config.vm.box = "ubuntu/bionic64"
+  config.vm.box_check_update = false
   config.vm.synced_folder ".", "/vagrant"
   config.vm.provision "shell", path: "setup/bootstrap.sh"
   config.vm.provision "shell" do |s|
@@ -21,16 +33,34 @@ Vagrant.configure("2") do |config|
     SHELL
   end
   
-  # Node
-  (1..NodeCount).each do |i|
-    config.vm.define "node#{i}" do |node|
-      node.vm.box = "bento/ubuntu-20.04"
-      node.vm.network :private_network, ip: IP_IW + "#{NodeScale + i}"
-      node.vm.hostname = "node#{i}"
-      node.vm.network :forwarded_port, guest: 22, host: "#{2200 + i}", id: "ssh"
+  # Controller
+  (0..Controller).each do |i|
+    config.vm.define "controller-#{i}" do |node|
+      node.vm.hostname = "controller-#{i}"
+      node.vm.network :private_network, ip: IP_IW + "1#{i}"
+      # node.vm.network :forwarded_port, guest: 22, host: "#{2200 + i}", id: "ssh"
+      node.vm.provision :hosts, :sync_hosts => true
       node.vm.provider :virtualbox do |vb|
-        vb.memory = 2048
-        vb.cpus = i == 1 ? 3 : 1
+        vb.customize [ "modifyvm", :id, "--uartmode1", "disconnected" ]
+        vb.name = "controller-#{i}"
+        vb.cpus = 1
+        vb.memory = 1024
+      end
+      setup_dns node
+    end
+  end
+
+  (0..Worker).each do |i|
+    config.vm.define "worker-#{i}" do |node|
+      node.vm.hostname = "worker-#{i}"
+      node.vm.network :private_network, ip: IP_IW + "2#{i}"
+      # node.vm.network :forwarded_port, guest: 22, host: "#{2200 + i}", id: "ssh"
+      node.vm.provision :hosts, :sync_hosts => true
+      node.vm.provider :virtualbox do |vb|
+        vb.customize [ "modifyvm", :id, "--uartmode1", "disconnected" ]
+        vb.name = "worker-#{i}"
+        vb.cpus = 1
+        vb.memory = 512
       end
       setup_dns node
     end

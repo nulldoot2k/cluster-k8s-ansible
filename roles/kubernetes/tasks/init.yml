@@ -5,42 +5,47 @@
     dest: "{{ kubernetes.kube_config_file }}"
     force: no
 
-- name: Kubernetes Init - Configuring templates
-  blockinfile:
-    path: "{{ kubernetes.kube_config_file }}"
-    block: |
-         kind: ClusterConfiguration
-         apiVersion: kubeadm.k8s.io/v1beta3
-         networking:
-           podSubnet: "{{ kubernetes.CIDR }}"
-         ---
-         kind: KubeletConfiguration
-         apiVersion: kubelet.config.k8s.io/v1beta1
-         runtimeRequestTimeout: "15m"
-         cgroupDriver: "systemd"
-         systemReserved:
-           cpu: 100m
-           memory: 350M
-         kubeReserved:
-           cpu: 100m
-           memory: 50M
-         enforceNodeAllocatable:
-         - pods
+- name: Kubernetes Init - Copy init config
+  template:
+    src: "init.yml.j2"
+    dest: "{{ kubernetes.kube_config_file }}"
+
+# - name: Kubernetes Init - Configuring templates
+#   blockinfile:
+#     path: "{{ kubernetes.kube_config_file }}"
+#     block: |
+#          kind: ClusterConfiguration
+#          apiVersion: kubeadm.k8s.io/v1beta3
+#          networking:
+#            podSubnet: "{{ kubernetes.CIDR }}"
+#          ---
+#          kind: KubeletConfiguration
+#          apiVersion: kubelet.config.k8s.io/v1beta1
+#          runtimeRequestTimeout: "15m"
+#          cgroupDriver: "systemd"
+#          systemReserved:
+#            cpu: 100m
+#            memory: 350M
+#          kubeReserved:
+#            cpu: 100m
+#            memory: 50M
+#          enforceNodeAllocatable:
+#          - pods
 
 - name: Kubernetes Init - Initialize the cluster (this could take some time)
   shell: "kubeadm init --config {{ kubernetes.kube_config_file }} >> {{ kubernetes.logs_cluster }}"
   args:
     chdir: /root/
     creates: "{{ kubernetes.logs_cluster }}"
-
-- name: Kubernetes Init - Create .kube directory
-  file:
-    path: "{{ kubernetes.config }}"
-    state: directory
-    mode: 0755
-
-- name: Kubernetes Init - Copy admin.conf to user's kube config
-  copy:
-    src: "{{ kubernetes.kube_config_admin }}"
-    dest: "{{ kubernetes.config }}/config"
-    remote_src: yes
+#
+# - name: Kubernetes Init - Create .kube directory
+#   file:
+#     path: "{{ kubernetes.config }}"
+#     state: directory
+#     mode: 0755
+#
+# - name: Kubernetes Init - Copy admin.conf to user's kube config
+#   copy:
+#     src: "{{ kubernetes.kube_config_admin }}"
+#     dest: "{{ kubernetes.config }}/config"
+#     remote_src: yes

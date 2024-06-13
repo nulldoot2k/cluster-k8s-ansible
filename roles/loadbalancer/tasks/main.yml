@@ -6,11 +6,13 @@
     state: present
   notify: start nginx
 
-- name: copy configuration files
+- name: copy configuration k8s
   template:
     src: "k8s-lb.j2"
-    dest: "{{ lb.lb_path_conf }}/{{ item }}"
+    dest: "{{ lb.lb_path_conf }}/k8s-lb.conf"
     mode: 0644
-  loop:
-    - "k8s-lb.conf"
-  notify: restart nginx
+
+- name: restart nginx
+  service:
+    name: nginx
+    state: restarted

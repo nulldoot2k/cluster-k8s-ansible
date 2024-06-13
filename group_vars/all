@@ -4,8 +4,12 @@ ansible:
   ansible_distribution_release: focal
 
 lb:
+  virtual_ip: "{{ hostvars['loadbalancer']['ansible_host'] }}"
   lb_path_enabled: "/etc/nginx/sites-enabled/"
   lb_path_conf: "/etc/nginx/conf.d/"
+  lb_port_443: 443
+  kube_proxy_port: 6443
+  etcd_proxy_port: 2379
 
 containerd:
   name: containerd
@@ -35,6 +39,14 @@ kubernetes:
   logs_pods_flannel: "pod_network_setup_flannel.log"
   logs_pods_calico: "pod_network_setup_calico.log"
   logs_nodes: "node_joined.log"
+
+etcd:
+  etcd_version: "3.5.13"
+  etcd_architecture: "amd64"
+  etcd_download_dir: "/tmp"
+  etcd_path_conf: "/etc/etcd"
+  etcd_path_bin: "/usr/local/bin"
+  etcd_path_systemd: "/etc/systemd/system"
 
 cfssl:
   cfssl_version: "1.6.5"

@@ -1,0 +1,22 @@
+---
+# tasks file for roles/cert-cfssl
+- include_tasks: install-certs.yml
+  when: inventory_hostname == 'localhost'
+
+- include_tasks:
+    file: generate-etcd-certs.yml
+    apply:
+      tags: gen-certs
+  tags: gen-certs
+  when: 
+    - inventory_hostname == 'localhost'
+    - "'gen-certs' in ansible_run_tags"
+
+- include_tasks:
+    file: sync-certs.yml
+    apply:
+      tags: sync-certs
+  tags: sync-certs
+  when: 
+    - "'sync-certs' in ansible_run_tags"
+    - inventory_hostname in groups['master']

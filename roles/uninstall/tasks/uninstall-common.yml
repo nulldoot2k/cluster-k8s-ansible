@@ -37,7 +37,7 @@
 
 - name: Common Uninstall - Delete empty file for Containerd module
   file:
-    path: "{{ containerd.container_module_conf}"
+    path: "{{ containerd.container_module_conf}}"
     state: absent
 # end
 
