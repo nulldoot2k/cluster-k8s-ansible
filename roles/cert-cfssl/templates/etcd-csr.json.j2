@@ -3,6 +3,8 @@
   "hosts": [
     "localhost",
     "127.0.0.1",
+    "{{ hostvars[groups['lb'][0]]['ansible_host'] }}",
+
     {%- for host in groups['master'] -%}
     "{{ hostvars[host]['ansible_host'] }}"{% if not loop.last %}, {% endif %}
     {%- endfor -%}

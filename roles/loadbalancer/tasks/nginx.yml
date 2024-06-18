@@ -1,0 +1,30 @@
+---
+- name: install nginx
+  apt:
+    update_cache: yes
+    name: nginx
+    state: present
+  notify: start nginx
+
+- name: copy configuration nginx
+  copy:
+    src: "{{ role_path }}/files/nginx.conf"
+    dest: "{{ lb.lb_path_conf }}"
+    mode: 0644
+
+- name: Create kube.d directory
+  file:
+    path: "{{ lb.lb_path_kube }}"
+    state: directory
+    mode: 0755
+
+- name: copy configuration k8s
+  template:
+    src: "k8s-lb.j2"
+    dest: "{{ lb.lb_path_kube }}/k8s-lb.conf"
+    mode: 0644
+
+- name: restart nginx
+  service:
+    name: nginx
+    state: restarted

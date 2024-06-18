@@ -1,0 +1,17 @@
+---
+- name: install keepalived
+  apt:
+    name: keepalived
+    state: present
+
+- name: deploy keepalived script
+  template:
+    src: check_apiserver.sh
+    dest: /etc/keepalived/check_apiserver.sh
+    mode: "a+x"
+
+- name: deploy keepalived config
+  template:
+    src: keepalived.conf.j2
+    dest: /etc/keepalived/keepalived.conf
+  notify: restart keepalived

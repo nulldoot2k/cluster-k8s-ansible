@@ -62,6 +62,35 @@
     - 'net.bridge.bridge-nf-call-iptables  = 1'
     - 'net.ipv4.ip_forward                 = 1'
     - 'net.bridge.bridge-nf-call-ip6tables = 1'
+
+- name: Common - Fix [ERROR] FileContent iptables
+  shell: |
+    modprobe br_netfilter
+    echo 1 > /proc/sys/net/bridge/bridge-nf-call-iptables
+    echo 1 > /proc/sys/net/ipv4/ip_forward
+
+- name: Common - Check br_netfilter module
+  shell: lsmod | grep br_netfilter
+  register: br_netfilter_output
+  ignore_errors: true
+
+- name: Common - Check overlay module
+  shell: lsmod | grep overlay
+  register: overlay_output
+  ignore_errors: true
+
+- name: Common - Check sysctl settings
+  shell: sysctl net.bridge.bridge-nf-call-iptables net.bridge.bridge-nf-call-ip6tables net.ipv4.ip_forward
+  register: sysctl_output
+  ignore_errors: true
+
+- name: Common - Display output
+  debug:
+    var:
+      br_netfilter_output.stdout_lines
+      overlay_output.stdout_lines
+      sysctl_output.stdout_lines
+  ignore_errors: true
 # end
 
 - name: Common - Apply sysctl params without reboot

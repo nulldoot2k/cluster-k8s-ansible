@@ -17,7 +17,7 @@
       tags: join-master
   tags: join-master
   when: 
-    - inventory_hostname in groups['master']
+    - inventory_hostname not in groups['worker']
     - "'join-master' in ansible_run_tags"
 
 - include_tasks: 
@@ -26,5 +26,4 @@
       tags: join-worker
   tags: join-worker
   when: 
-    - inventory_hostname in groups['worker']
     - "'join-worker' in ansible_run_tags"

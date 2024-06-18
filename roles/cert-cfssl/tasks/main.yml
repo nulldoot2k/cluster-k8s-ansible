@@ -9,8 +9,8 @@
       tags: gen-certs
   tags: gen-certs
   when: 
-    - inventory_hostname == 'localhost'
     - "'gen-certs' in ansible_run_tags"
+    - inventory_hostname == 'localhost'
 
 - include_tasks:
     file: sync-certs.yml
@@ -19,4 +19,4 @@
   tags: sync-certs
   when: 
     - "'sync-certs' in ansible_run_tags"
-    - inventory_hostname in groups['master']
+    - inventory_hostname != 'localhost'

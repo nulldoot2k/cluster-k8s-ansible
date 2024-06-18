@@ -1,35 +1,28 @@
 [Unit]
 Description=etcd
 Documentation=https://github.com/coreos/etcd
-Conflicts=etcd.service
-Conflicts=etcd2.service
 
 [Service]
 EnvironmentFile=/etc/etcd/etcd.env
 Type=notify
-Restart=always
+Restart=on-failure
 RestartSec=5s
 LimitNOFILE=40000
 TimeoutStartSec=0
-
 ExecStart=/usr/local/bin/etcd \
     --name ${PEER_NAME} \
-    --data-dir /var/lib/etcd \
-    --cert-file=/etc/kubernetes/pki/etcd/etcd.pem \
-    --key-file=/etc/kubernetes/pki/etcd/etcd-key.pem \
-    --peer-cert-file=/etc/kubernetes/pki/etcd/etcd.pem \
-    --peer-key-file=/etc/kubernetes/pki/etcd/etcd-key.pem \
-    --trusted-ca-file=/etc/kubernetes/pki/etcd/ca.pem \
-    --peer-trusted-ca-file=/etc/kubernetes/pki/etcd/ca.pem \
-    --peer-client-cert-auth \
-    --client-cert-auth \
     --initial-advertise-peer-urls https://${PRIVATE_IP}:2380 \
     --listen-peer-urls https://${PRIVATE_IP}:2380 \
-    --advertise-client-urls https://${PRIVATE_IP}:2379 \
     --listen-client-urls https://${PRIVATE_IP}:2379,https://127.0.0.1:2379 \
-    --initial-cluster ${INIT_CLUSTER} \
+    --advertise-client-urls https://${PRIVATE_IP}:2379 \
     --initial-cluster-token etcd-cluster-token \
-    --initial-cluster-state new
+    --initial-cluster ${INIT_CLUSTER} \
+    --initial-cluster-state new \
+    --client-cert-auth --trusted-ca-file={{ etcd.etcd_path_cert }}/ca.pem \
+    --cert-file={{ etcd.etcd_path_cert }}/etcd.pem \
+    --key-file={{ etcd.etcd_path_cert }}/etcd-key.pem \
+    --peer-auto-tls \
+    --snapshot-count '10000'
 
 [Install]
 WantedBy=multi-user.target

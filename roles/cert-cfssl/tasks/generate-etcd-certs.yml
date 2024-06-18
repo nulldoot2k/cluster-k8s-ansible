@@ -1,35 +1,4 @@
 ---
-# - name: CFSSL - Copy cert template
-#   copy:
-#     src: "{{ role_path }}/files/certs/"
-#     dest: "{{ kubernetes.kube_etcd_ca_dir }}"
-#     directory_mode: true
-#
-# - name: CFSSL - Copy certificates tls
-#   template:
-#     src: etcd-csr.json.j2
-#     dest: "{{ kubernetes.kube_etcd_ca_dir }}/etcd-csr.json"
-#
-# - name: CFSSL - Generate CA certs
-#   shell: |
-#     cd /etc/kubernetes/pki/etcd
-#     /usr/local/bin/cfssl gencert -initca ca-csr.json | /usr/local/bin/cfssljson -bare ca -
-#
-# - name: CFSSL - Generate etcd client certs
-#   shell: |
-#     cd /etc/kubernetes/pki/etcd
-#     /usr/local/bin/cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=etcd etcd-csr.json | /usr/local/bin/cfssljson -bare etcd
-# #
-# - name: CFSSL - Get certs local machine from masterfirst
-#   fetch:
-#     src: "{{ kubernetes.kube_etcd_ca_dir }}/{{item}}"
-#     dest: "{{ role_path }}/files/cert-updates/{{item}}"
-#     flat: yes
-#   with_items:
-#     - ca.pem
-#     - etcd.pem
-#     - etcd-key.pem
-
 - name: Create gcerts directory if not exists
   file:
     path: "{{ role_path }}/files/cert-updates"
@@ -54,6 +23,26 @@
     /usr/local/bin/cfssl gencert -ca={{role_path}}/files/cert-updates/ca.pem -ca-key={{role_path}}/files/cert-updates/ca-key.pem -config={{role_path}}/files/certs/ca-config.json -profile=etcd {{role_path}}/files/cert-updates/etcd-csr.json | /usr/local/bin/cfssljson -bare etcd
   args:
     chdir: "{{ role_path }}/files/cert-updates"
+  become: false
+
+
+- name: Get etcd CA certificate fingerprint
+  shell: "openssl x509 -in /etc/kubernetes/pki/etcd/ca.pem -noout -pubkey | openssl rsa -pubin -outform DER 2>/dev/null | sha256sum | cut -d' ' -f1"
+  args:
+    chdir: "{{ role_path }}/files/cert-updates"
+  register: fingerprint_result
+  become: false
+
+- name: Debug fingerprint_result.stdout
+  debug:
+    var: fingerprint_result.stdout
+  become: false
+
+- name: Update fingerprint in all file
+  replace:
+    path: "{{ role_path }}/../../group_vars/all"
+    regexp: '^(\s+CERT_KEY:\s+).*?$'
+    replace: '\1{{ fingerprint_result.stdout }}'
   become: false
 
 - name: CFSSL - Find unnecessary keys

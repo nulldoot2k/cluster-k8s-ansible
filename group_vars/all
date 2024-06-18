@@ -4,9 +4,15 @@ ansible:
   ansible_distribution_release: focal
 
 lb:
+  ansible_user_id_auth: ansible
+  peer_ha: false
+  network_interface: 'eth0'
   virtual_ip: "{{ hostvars['loadbalancer']['ansible_host'] }}"
   lb_path_enabled: "/etc/nginx/sites-enabled/"
-  lb_path_conf: "/etc/nginx/conf.d/"
+  lb_path_conf: "/etc/nginx/"
+  lb_path_tmp: "/tmp/certs/"
+  lb_path_kube: "/etc/nginx/kube.d/"
+  haproxy_stats_port: 9000
   lb_port_443: 443
   kube_proxy_port: 6443
   etcd_proxy_port: 2379
@@ -20,18 +26,22 @@ containerd:
 
 kubernetes:
   name: kubernetes
+  CERT_KEY: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+  CERT_TOKEN: o7fj8f.5zdqblvxppakfzj9
+  cluster_ha: true
   kubernetes_version: "1.28"
-  version: "1.28.*"
+  version: "1.28.10-1.1"
+  vs: "stable-1.28"
   CIDR: "10.244.0.0/16"
   kubernetes_apt_release_channel: "stable"
   master_node: "{{ hostvars[groups['master'][0]]['ansible_host'] }}"
-  config: "/{{ ansible_user }}/.kube"
+  config: "~/.kube"
   kubernetes_keyring_file: "/etc/apt/keyrings/kubernetes-apt-keyring.asc"
   kubernetes_release_channel: "stable"
   kube_config_file: "/etc/kubernetes/kubeadm-config.yaml"
   kube_repo_file: "/etc/apt/sources.list.d/kubernetes.list"
   kube_config_admin: "/etc/kubernetes/admin.conf"
-  kube_sysctl_conf: "/etc/sysctl.d/99-kubernetes-cri.conf"
+  kube_sysctl_conf: "/etc/sysctl.d/10-kubernetes.conf"
   kube_config_dir: "/etc/kubernetes"
   kube_cert_dir: "/etc/kubernetes/pki"
   kube_etcd_ca_dir: "/etc/kubernetes/pki/etcd"
@@ -45,6 +55,9 @@ etcd:
   etcd_architecture: "amd64"
   etcd_download_dir: "/tmp"
   etcd_path_conf: "/etc/etcd"
+  etcd_path_lib: "/var/lib/etcd/"
+  etcd_path_cert: "/var/lib/etcd/certs"
+  etcd_path_data: "/var/lib/etcd/data"
   etcd_path_bin: "/usr/local/bin"
   etcd_path_systemd: "/etc/systemd/system"
 
@@ -91,4 +104,3 @@ nfs_storage:
   storageclass_name: managed-nfs-storage
   deployment_name: nfs-client-provisioner
   provisioner: k8s-sigs.io/nfs-subdir-external-provisioner
-

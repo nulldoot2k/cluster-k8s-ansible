@@ -1,18 +1,25 @@
 ---
-- name: install nginx
-  apt:
-    update_cache: yes
-    name: nginx
-    state: present
-  notify: start nginx
+# proxy
+- include_tasks:
+    file: nginx.yml
+    apply:
+      tags: nginx
+  tags: nginx
+  when: 
+    - "'nginx' in ansible_run_tags"
 
-- name: copy configuration k8s
-  template:
-    src: "k8s-lb.j2"
-    dest: "{{ lb.lb_path_conf }}/k8s-lb.conf"
-    mode: 0644
+- include_tasks:
+    file: haproxy.yml
+    apply:
+      tags: haproxy
+  tags: haproxy
+  when: 
+    - "'haproxy' in ansible_run_tags"
 
-- name: restart nginx
-  service:
-    name: nginx
-    state: restarted
+- include_tasks: 
+    file: keepalived.yml
+    apply:
+      tags: keepalived
+  tags: keepalived
+  when: 
+    - "'keepalived' in ansible_run_tags"

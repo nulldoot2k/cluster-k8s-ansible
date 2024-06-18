@@ -1,14 +1,13 @@
-upstream kubernetes {
-{% for host in groups['master'] %}
-    server {{ hostvars[host]['ansible_host'] }}:{{ lb.kube_proxy_port }};
-{% endfor %}
-}
+stream {
+  upstream kubernetes {
+  {% for host in groups['master'] %}
+      server {{ hostvars[host]['ansible_host'] }}:{{ lb.kube_proxy_port }};
+  {% endfor %}
+  }
 
-server {
-    listen {{ lb.kube_proxy_port }};
-    listen {{ lb.lb_port_443 }};
-
-    location / {
-        proxy_pass http://kubernetes;
-    }
+  server {
+      listen {{ lb.kube_proxy_port }};
+      listen {{ lb.lb_port_443 }};
+      proxy_pass kubernetes;
+  }
 }

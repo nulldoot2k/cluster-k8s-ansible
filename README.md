@@ -143,6 +143,23 @@ Commercial support is available at
 </html>
 ```
 
+## ETCD
+
+```bash
+etcdctl member list -w=table
+etcdctl endpoint status -w=table --cluster
+etcdctl endpoint health -w=table --cluster
+```
+
+```bash
+ETCDCTL_API=3 etcdctl \
+  --endpoints=https://127.0.0.1:2379 \
+  --cacert=/etc/kubernetes/pki/etcd/ca.pem \
+  --cert=/etc/kubernetes/pki/etcd/etcd.pem \
+  --key=/etc/kubernetes/pki/etcd/etcd-key.pem \
+  member list -w=table
+```
+
 ## Uninstall Cluster
 
 ```bash
@@ -151,3 +168,7 @@ ansible-playbook -i hosts playbook.yml --tags uninstall-cluster
 
 ## Thanks for Reading!
 - Donate: Visa Viettinbank: **103868801400**
+
+## Reference
+
+- https://www.haproxy.com/blog/exploring-the-haproxy-stats-page

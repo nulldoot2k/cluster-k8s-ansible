@@ -16,12 +16,12 @@
     - { role: nfs, tags: nfs }
 
 - name: Ensure Nginx
+  tags: [nginx,haproxy,keepalived]
   hosts: [ lb ] 
-  roles:
-    - { role: loadbalancer, tags: lb }
+  roles: [ loadbalancer ]
 
 - name: Ensure cfssl
-  hosts: [localhost:master]
+  hosts: [localhost:master,lb]
   roles:
     - { role: cert-cfssl, tags: cfssl,gen-certs,sync-certs }
 
@@ -34,8 +34,8 @@
 - name: Deploy Cluster K8s
   hosts: [cluster]
   roles:
-    - { role: kubernetes, tags: k8s,k8s-init,join-master,join-worker}
     - { role: etcd, tags: etcd, when: "inventory_hostname in groups['master']" }
+    - { role: kubernetes, tags: k8s,k8s-init,join-master,join-worker}
 
 - name: Setup Component
   hosts: ["master[0]"]
