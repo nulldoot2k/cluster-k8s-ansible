@@ -1,2 +1,10 @@
+- name: Set Nginx controller URL
+  set_fact:
+    nginx_controller_url: "kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-{{ ingress_nginx.version }}/deploy/static/provider/{{ ingress_nginx.provider }}/deploy.yaml"
+
+- name: Debug Nginx controller URL
+  debug:
+    var: nginx_controller_url
+
 - name: "deploy :: applies the Nginx controller manifests"
   shell: "kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-{{ ingress_nginx.version }}/deploy/static/provider/{{ ingress_nginx.provider }}/deploy.yaml"

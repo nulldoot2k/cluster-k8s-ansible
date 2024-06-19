@@ -1,3 +1,12 @@
+---
+- name: Set Nginx controller URL
+  set_fact:
+    manager_cert_url: "kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/{{ cert_manager.version }}/cert-manager.yaml"
+
+- name: Debug Nginx controller URL
+  debug:
+    var: manager_cert_url
+
 - name: "Applies the cert-manager"
   shell: |
    kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/{{ cert_manager.version }}/cert-manager.yaml
