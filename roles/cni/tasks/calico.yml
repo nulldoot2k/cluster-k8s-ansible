@@ -10,7 +10,7 @@
 - name: "Install Pod network Calico"
   shell: "kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/{{ cni.calico.version }}/manifests/calico.yaml >> {{ kubernetes.logs_pods_calico }}"
   environment:
-    KUBECONFIG: /etc/kubernetes/admin.conf
+      KUBECONFIG: "{{ kubernetes.kube_config_admin }}"
   args:
     chdir: "$HOME"
     creates: "{{ kubernetes.logs_pods_calico }}"

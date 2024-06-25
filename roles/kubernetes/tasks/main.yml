@@ -12,6 +12,15 @@
     - "'k8s-init' in ansible_run_tags"
 
 - include_tasks:
+    file: gens.yml
+    apply:
+      tags: k8s-gens
+  tags: k8s-gens
+  when: 
+    - inventory_hostname in groups['master'][0]
+    - "'k8s-gens' in ansible_run_tags"
+
+- include_tasks:
     file: master.yml
     apply:
       tags: join-master

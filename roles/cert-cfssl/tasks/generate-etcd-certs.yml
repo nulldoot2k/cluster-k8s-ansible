@@ -25,26 +25,6 @@
     chdir: "{{ role_path }}/files/cert-updates"
   become: false
 
-
-- name: Get etcd CA certificate fingerprint
-  shell: "openssl x509 -in /etc/kubernetes/pki/etcd/ca.pem -noout -pubkey | openssl rsa -pubin -outform DER 2>/dev/null | sha256sum | cut -d' ' -f1"
-  args:
-    chdir: "{{ role_path }}/files/cert-updates"
-  register: fingerprint_result
-  become: false
-
-- name: Debug fingerprint_result.stdout
-  debug:
-    var: fingerprint_result.stdout
-  become: false
-
-- name: Update fingerprint in all file
-  replace:
-    path: "{{ role_path }}/../../group_vars/all"
-    regexp: '^(\s+CERT_KEY:\s+).*?$'
-    replace: '\1{{ fingerprint_result.stdout }}'
-  become: false
-
 - name: CFSSL - Find unnecessary keys
   find:
     paths: "{{ role_path }}/files/cert-updates"

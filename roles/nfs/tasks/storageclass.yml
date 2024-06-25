@@ -31,7 +31,7 @@
 - name: Kubernetes - Apply storageclass configurations
   shell: kubectl apply -f "{{ nfs.nfs_path_tmp }}"
   environment:
-    KUBECONFIG: /etc/kubernetes/admin.conf
+      KUBECONFIG: "{{ kubernetes.kube_config_admin }}"
   args:
     executable: /bin/bash
   become: true
