@@ -98,8 +98,7 @@ nfs:
 nfs_storage:
   whitelist_ips: 
     - 192.168.101.0/24
-    - 10.3.52.0/22
-    - 10.0.2.0/24
+    - 10.0.0.0/16
   archive_delete: "false"
   storageclass_name: managed-nfs-storage
   deployment_name: nfs-client-provisioner
