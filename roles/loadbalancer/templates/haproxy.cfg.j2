@@ -68,3 +68,23 @@ backend back-etcd-proxy
   {% for item in groups['master'] %}
     server {{ item }} {{hostvars[item]["ansible_host"]}}:{{ lb.etcd_proxy_port }} check
   {% endfor %}
+
+#############################
+#  nodeport config
+#############################
+
+# frontend nodeport-frontend
+#   bind *:30000-35000
+#   mode tcp
+#   option tcplog
+#   timeout client 10s
+#   default_backend nodeport-backend
+#
+# backend nodeport-backend
+#   mode tcp
+#   timeout connect 10s
+#   timeout server 10s
+#   balance roundrobin
+#   {% for item in groups['master'] %}
+#     server {{ item }} {{hostvars[item]["ansible_host"]}}
+#   {% endfor %}

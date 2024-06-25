@@ -9,6 +9,8 @@
 
 - name: Install Pod network Flannel
   shell: "kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/{{ cni.plannel.version }}/Documentation/kube-flannel.yml >> {{ kubernetes.logs_pods_flannel }}"
+  environment:
+      KUBECONFIG: "{{ kubernetes.kube_config_admin }}"
   args:
     chdir: "$HOME"
     creates: "{{ kubernetes.logs_pods_flannel }}"

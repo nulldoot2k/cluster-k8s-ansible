@@ -10,3 +10,5 @@
 - name: "Applies the cert-manager"
   shell: |
    kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/{{ cert_manager.version }}/cert-manager.yaml
+  environment:
+      KUBECONFIG: "{{ kubernetes.kube_config_admin }}"

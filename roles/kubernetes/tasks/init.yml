@@ -1,4 +1,18 @@
 ---
+# gen token init cluster
+- name: Get kubeadm token
+  shell: "kubeadm token generate"
+  register: token_output
+
+- name: Update token_output in variables all
+  replace:
+    path: "{{ role_path }}/../../group_vars/all"
+    regexp: '^(\s+CERT_TOKEN:\s+).*?$'
+    replace: '\1{{ token_output.stdout }}'
+  become: false
+  delegate_to: localhost
+
+# copy config templates
 - name: Kubernetes Init - Create an empty configuring
   copy:
     content: ""
@@ -23,6 +37,7 @@
     chdir: "$HOME/"
     creates: "{{ kubernetes.logs_cluster }}"
 
+# admin
 - name: Kubernetes Init - Create .kube directory
   file:
     path: "{{ kubernetes.config }}"

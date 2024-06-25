@@ -1,28 +1,27 @@
 ---
-- name: Gen token hash master
+- name: Gen token hash and certs master
   block:
-    - name: Get CA certificate hash
-      community.crypto.x509_certificate_info:
-        path: /etc/kubernetes/pki/ca.crt
-      register: __k8s_pki_ca
-
-    - name: Set fact with SHA-256 hash
-      set_fact:
-        sha256_hash: "{{ __k8s_pki_ca['public_key_fingerprints']['sha256'] | replace(':', '') }}"
-    - name: show hash command
-      debug:
-        var: sha256_hash
+    - name: gen token hash
+      shell: kubeadm token create --print-join-command
+      environment:
+          KUBECONFIG: "{{ kubernetes.kube_config_admin }}"
+      register: token_output
+    - name: Get CA Certs
+      shell: "kubeadm init phase upload-certs --upload-certs --config {{ kubernetes.kube_config_file }}"
+      register: cert_output
+      environment:
+          KUBECONFIG: "{{ kubernetes.kube_config_admin }}"
   when: inventory_hostname == groups['master'][0]
 
-- name: Set fact with SHA-256 hash
+- name: Set fact env
   set_fact:
-    sha256_hash: "{{ hostvars[groups['master'][0]]['sha256_hash'] }}"
+    token_output: "{{ hostvars[groups['master'][0]]['token_output']['stdout_lines'][-1] }}"
+    cert_output: "{{ hostvars[groups['master'][0]]['cert_output']['stdout_lines'][-1] }}"
   when: inventory_hostname != groups['master'][0]
 
 - block:
-  - debug: var=sha256_hash
   - name: Add master node now
-    shell: "kubeadm join {{ hostvars[groups['lb'][0]]['ansible_host'] }}:6443 --token {{ kubernetes.CERT_TOKEN }} --discovery-token-ca-cert-hash sha256:{{ sha256_hash }} --control-plane --certificate-key {{ kubernetes.CERT_KEY }} >> {{ kubernetes.logs_cluster }}"
+    shell: "{{ token_output }} --control-plane --certificate-key {{ cert_output }} >> {{ kubernetes.logs_cluster }}"
     args:
       chdir: $HOME
       creates: "{{ kubernetes.logs_cluster }}"

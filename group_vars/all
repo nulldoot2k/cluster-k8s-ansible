@@ -26,8 +26,7 @@ containerd:
 
 kubernetes:
   name: kubernetes
-  CERT_KEY: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
-  CERT_TOKEN: o7fj8f.5zdqblvxppakfzj9
+  CERT_TOKEN: bkv48o.ubga8x5ojvn3cg7y
   cluster_ha: true
   kubernetes_version: "1.28"
   version: "1.28.10-1.1"
@@ -99,6 +98,7 @@ nfs:
 nfs_storage:
   whitelist_ips: 
     - 192.168.101.0/24
+    - 10.3.52.0/22
     - 10.0.2.0/24
   archive_delete: "false"
   storageclass_name: managed-nfs-storage

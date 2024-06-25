@@ -1,29 +1,21 @@
 ---
-- name: Gen token hash worker
+- name: Gen token hash and certs master
   block:
-    - name: Get CA certificate hash
-      community.crypto.x509_certificate_info:
-        path: /etc/kubernetes/pki/ca.crt
-      register: __k8s_pki_ca
-
-    - name: Set fact with SHA-256 hash
-      set_fact:
-        sha256_hash: "{{ __k8s_pki_ca['public_key_fingerprints']['sha256'] | replace(':', '') }}"
-    - name: show hash command
-      debug:
-        var: sha256_hash
+    - name: gen token hash
+      shell: kubeadm token create --print-join-command
+      environment:
+          KUBECONFIG: "{{ kubernetes.kube_config_admin }}"
+      register: token_output
   when: inventory_hostname == groups['master'][0]
 
-- name: Set fact with SHA-256 hash
+- name: Set fact env
   set_fact:
-    sha256_hash: "{{ hostvars[groups['master'][0]]['sha256_hash'] }}"
-  when: 
-    - inventory_hostname != groups['master']
+    token_output: "{{ hostvars[groups['master'][0]]['token_output']['stdout_lines'][-1] }}"
+  when: inventory_hostname != groups['master'][0]
 
 - block:
-  - debug: var=sha256_hash
-  - name: Add master node now
-    shell: "kubeadm join {{ hostvars[groups['lb'][0]]['ansible_host'] }}:6443 --token {{ kubernetes.CERT_TOKEN }} --discovery-token-ca-cert-hash sha256:{{ sha256_hash }} >> {{ kubernetes.logs_nodes }}"
+  - name: Add worker node now
+    shell: "{{ token_output }} >> {{ kubernetes.logs_nodes }}"
     args:
       chdir: $HOME
       creates: "{{ kubernetes.logs_nodes }}"

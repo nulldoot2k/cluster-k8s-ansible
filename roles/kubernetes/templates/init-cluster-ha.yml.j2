@@ -10,7 +10,6 @@ bootstrapTokens:
   - signing
   - authentication
 
-certificateKey: {{ kubernetes.CERT_KEY }}
 nodeRegistration:
   criSocket: unix:///var/run/containerd/containerd.sock
   imagePullPolicy: IfNotPresent
@@ -30,9 +29,7 @@ dns: {}
 etcd:
   external:
     endpoints:
-  {% for host in groups['master'] %}
-    - https://{{ hostvars[host].ansible_host }}:2379
-  {% endfor %}
+    - https://{{ hostvars[groups['lb'][0]]['ansible_host'] }}:2379
 
     caFile: "{{ kubernetes.kube_etcd_ca_dir }}/ca.pem"
     certFile: "{{ kubernetes.kube_etcd_ca_dir }}/etcd.pem"
