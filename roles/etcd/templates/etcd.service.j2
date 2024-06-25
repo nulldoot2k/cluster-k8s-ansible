@@ -6,7 +6,7 @@ Documentation=https://github.com/coreos/etcd
 EnvironmentFile=/etc/etcd/etcd.env
 Type=notify
 Restart=on-failure
-RestartSec=5s
+RestartSec=5
 LimitNOFILE=40000
 TimeoutStartSec=0
 ExecStart=/usr/local/bin/etcd \
@@ -18,10 +18,13 @@ ExecStart=/usr/local/bin/etcd \
     --initial-cluster-token etcd-cluster-token \
     --initial-cluster ${INIT_CLUSTER} \
     --initial-cluster-state new \
-    --client-cert-auth --trusted-ca-file={{ etcd.etcd_path_cert }}/ca.pem \
+    --client-cert-auth \
+    --trusted-ca-file={{ etcd.etcd_path_cert }}/ca.pem \
     --cert-file={{ etcd.etcd_path_cert }}/etcd.pem \
     --key-file={{ etcd.etcd_path_cert }}/etcd-key.pem \
-    --peer-auto-tls \
+    --peer-cert-file={{ etcd.etcd_path_cert }}/etcd.pem \
+    --peer-key-file={{ etcd.etcd_path_cert }}/etcd-key.pem \
+    --peer-trusted-ca-file={{ etcd.etcd_path_cert }}/ca.pem \
     --snapshot-count '10000'
 
 [Install]

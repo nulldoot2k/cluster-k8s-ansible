@@ -29,7 +29,9 @@
   failed_when: false
 
 - name: Kubernetes - Apply storageclass configurations
-  command: kubectl apply -f "{{ nfs.nfs_path_tmp }}"
+  shell: kubectl apply -f "{{ nfs.nfs_path_tmp }}"
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
   args:
     executable: /bin/bash
   become: true
