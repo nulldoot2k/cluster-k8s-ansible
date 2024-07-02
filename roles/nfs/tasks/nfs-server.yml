@@ -70,7 +70,8 @@
     destination_port: nfs
     source: "{{ item }}"
     jump: ACCEPT
-  become: yes
+    comment: Accept new NFS connections.
+    state: present
   loop: "{{ nfs_storage.whitelist_ips }}"
   when: iptables_check.changed == false
 

@@ -21,7 +21,7 @@
   roles: [ loadbalancer ]
 
 - name: Ensure cfssl
-  hosts: [localhost:master,lb]
+  hosts: [localhost:master]
   roles:
     - { role: cert-cfssl, tags: cfssl,gen-certs,sync-certs }
 

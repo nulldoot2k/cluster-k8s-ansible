@@ -2,7 +2,7 @@
 
 <center>Automate the provisioning of a new bare-metal multi-node Kubernetes cluster with Ansible. Uses all the industry-standard tools for an enterprise-grade cluster.</center>
 
-![image](https://github.com/nulldoot2k/cluster-k8s-ansible/assets/83489434/2626d953-bd21-4755-9e58-d51ea1124b6f)
+![image](https://i.imgur.com/lNfDM7S.png)
 
 ## Table of Contents
 
@@ -10,7 +10,7 @@
 - [Requirements](#requirements) 
 - [Prerequisites](#prerequisites)
 - [Usage](#usage) 
-- [Test Nginx](#test-nginx) 
+- [Gen and Sync Certs](#gen-certs-and-sync-certs) 
 - [Uninstall Cluster](#uninstall-cluster) 
 
 ## Stack
@@ -65,11 +65,11 @@ Successfully uninstalled rake-13.2.1
 
 1, Clone this Git repository to your local working station:
 ```bash
-git clone https://github.com/nulldoot2k/cluster-k8s-ansible.git
+git clone git@git.paas.vn:datvm/ansible-k8s.git
 ```
 2, Change directory to the root directory of the project
 ```bash
-cd cluster-k8s-ansible
+cd ansible-k8s
 ```
 3, Edit the values of the default variables to your requirements
 ```bash
@@ -79,77 +79,18 @@ vi group_vars/all
 ```bash
 vi inventory/hosts.ini
 ```
-5, Run the Ansible Playbook:
+5, Check host and user
 ```bash
-ansible-playbook -i inventory/hosts.ini playbook.yml
+ansible-playbook -i inventory/hosts.ini playbook.yml --tags checking-hosts
+```
+6, Run the Ansible Playbook:
+```bash
+ansible-playbook -i inventory/hosts.ini playbook.yml --tags nfs,haproxy,cfssl,gen-certs,sync-certs,common,containerd,k8s,etcd,k8s-init,join-master,join-worker,cni-calico,ingress,k8s-nfs
 ```
 
-## Test Nginx
+## Check ETCD
 
-Kubernetes offers several options when exposing your service based on a feature called Kubernetes Service-types and they are:
-
-- ClusterIP – This Service-type generally exposes the service on an internal IP, reachable only within the cluster, and possibly only within the cluster-nodes.
-- NodePort – This is the most basic option of exposing your service to be accessible outside of your cluster, on a specific port (called the NodePort) on every node in the cluster. We will illustrate this option shortly.
-- LoadBalancer – This option leverages on external Load-Balancing services offered by various providers to allow access to your service. This is a more reliable option when thinking about high availability for your service, and has more feature beyond default access.
-- ExternalName – This service does traffic redirect to services outside of the cluster. As such the service is thus mapped to a DNS name that could be hosted out of your cluster. It is important to note that this does not use proxying.
-
-1, Deploy Image Nginxx
-
-```bash
-kubectl create deployment nginx --image=nginx
-```
-
-2, Exposing Your Nginx Service to Public Network
-
-```bash
-kubectl create service loadbalancer nginx --tcp=80:80
-```
-
-3, Check service
-
-```bash
-kubectl get svc
-NAME         TYPE           CLUSTER-IP      EXTERNAL-IP     PORT(S)        AGE
-nginx        LoadBalancer   10.96.163.143   192.168.101.1   80:31451/TCP   106s
-```
-
-4, Checking result
-
-```bash
-curl 192.168.101.1
---> results <--
-<!DOCTYPE html>
-<html>
-<head>
-<title>Welcome to nginx!</title>
-<style>
-html { color-scheme: light dark; }
-body { width: 35em; margin: 0 auto;
-font-family: Tahoma, Verdana, Arial, sans-serif; }
-</style>
-</head>
-<body>
-<h1>Welcome to nginx!</h1>
-<p>If you see this page, the nginx web server is successfully installed and
-working. Further configuration is required.</p>
-
-<p>For online documentation and support please refer to
-<a href="http://nginx.org/">nginx.org</a>.<br/>
-Commercial support is available at
-<a href="http://nginx.com/">nginx.com</a>.</p>
-
-<p><em>Thank you for using nginx.</em></p>
-</body>
-</html>
-```
-
-## ETCD
-
-```bash
-etcdctl member list -w=table
-etcdctl endpoint status -w=table --cluster
-etcdctl endpoint health -w=table --cluster
-```
+Connect to any master 
 
 ```bash
 ETCDCTL_API=3 etcdctl \
@@ -160,42 +101,21 @@ ETCDCTL_API=3 etcdctl \
   member list -w=table
 ```
 
-## Kubernetes
-
-Gen token join master first
-
 ```bash
-kubeadm token generate
+... member list -w=table
+... endpoint status -w=table --cluster
+... endpoint health -w=table --cluster
 ```
 
-Kubeadm create token
+## Check HAproxy
+
+![haproxy](https://i.imgur.com/zcAY4gl.png)
+
+
+## Gen Certs and Sync Certs
 
 ```bash
-kubeadm token create
-```
-
-Kubeadm create hash token
-
-```bash
-openssl x509 -in /etc/kubernetes/pki/ca.crt -noout -pubkey | openssl rsa -pubin -outform DER 2>/dev/null | sha256sum | cut -d' ' -f1
-```
-
-Kubeadm create token command join
-
-```bash
-kubeadm token create --print-join-command
-```
-
-Kubeadm create certs
-
-```bash
-kubeadm init phase upload-certs --upload-certs --config kubeadm-config.yaml
-```
-
-Get hash token cluster
-
-```bash
-curl -ks https://nginx:6443/cacerts | sha256sum
+ansible-playbook -i inventory/hosts.ini playbook.yml --tags gen-certs,sync-certs
 ```
 
 ## Uninstall Cluster
@@ -206,7 +126,3 @@ ansible-playbook -i hosts playbook.yml --tags uninstall-cluster
 
 ## Thanks for Reading!
 - Donate: Visa Viettinbank: **103868801400**
-
-## Reference
-
-- https://www.haproxy.com/blog/exploring-the-haproxy-stats-page

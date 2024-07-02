@@ -7,8 +7,8 @@
 - name: Update token_output in variables all
   replace:
     path: "{{ role_path }}/../../group_vars/all"
-    regexp: '^(\s+CERT_TOKEN:\s+).*?$'
-    replace: '\1{{ token_output.stdout }}'
+    regexp: '^(\\s+CERT_TOKEN:\\s+).*?$'
+    replace: '\\1{{ token_output.stdout }}'
   become: false
   delegate_to: localhost
 
