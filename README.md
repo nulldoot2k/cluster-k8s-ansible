@@ -2,7 +2,16 @@
 
 <center>Automate the provisioning of a new bare-metal multi-node Kubernetes cluster with Ansible. Uses all the industry-standard tools for an enterprise-grade cluster.</center>
 
+## Preview
+
+Cluster HA K8s + ETCD
+
 ![image](https://i.imgur.com/lNfDM7S.png)
+
+Cluster Single
+
+![image](https://i.imgur.com/Wb8Otxx.png)
+
 
 ## Table of Contents
 
@@ -10,7 +19,6 @@
 - [Requirements](#requirements) 
 - [Prerequisites](#prerequisites)
 - [Usage](#usage) 
-- [Gen and Sync Certs](#gen-certs-and-sync-certs) 
 - [Uninstall Cluster](#uninstall-cluster) 
 
 ## Stack
@@ -79,13 +87,52 @@ vi group_vars/all
 ```bash
 vi inventory/hosts.ini
 ```
-5, Check host and user
+5, Validate host and user
+
 ```bash
 ansible-playbook -i inventory/hosts.ini playbook.yml --tags checking-hosts
 ```
-6, Run the Ansible Playbook:
+
+### For Cluster Single
+
+Require Modify [Line](https://git.paas.vn/datvm/ansible-k8s/-/blob/master/group_vars/all?ref_type=heads#L30)
+
 ```bash
-ansible-playbook -i inventory/hosts.ini playbook.yml --tags nfs,haproxy,cfssl,gen-certs,sync-certs,common,containerd,k8s,etcd,k8s-init,join-master,join-worker,cni-calico,ingress,k8s-nfs
+cluster_ha: true --> false
+```
+
+Run playbook
+
+```bash
+ansible-playbook -i inventory/hosts.ini playbook.yml --tags common,containerd,k8s,k8s-init,join-worker,cni-calico,ingress
+```
+
+If setup NFS
+
+Modify variable: [whitelist](https://git.paas.vn/datvm/ansible-k8s/-/blob/master/group_vars/all?ref_type=heads#L99) and Run playbook
+
+```bash
+ansible-playbook -i inventory/hosts.ini playbook.yml --tags nfs,k8s-nfs
+```
+
+### For Cluster HA ETCD + K8s
+
+Require Modify [Line](https://git.paas.vn/datvm/ansible-k8s/-/blob/master/group_vars/all?ref_type=heads#L30)
+
+```bash
+cluster_ha: false --> true
+```
+
+Run playbook
+
+```bash
+ansible-playbook -i inventory/hosts.ini playbook.yml --tags nfs,haproxy,keepalived,cfssl,gen-certs,sync-certs,common,containerd,k8s,etcd,k8s-init,join-master,join-worker,cni-calico,ingress,k8s-nfs
+```
+
+Gen Certs and Sync Certs if not exists certs for etcd and cluster: Not require
+
+```bash
+ansible-playbook -i inventory/hosts.ini playbook.yml --tags gen-certs,sync-certs
 ```
 
 ## Check ETCD
@@ -110,13 +157,6 @@ ETCDCTL_API=3 etcdctl \
 ## Check HAproxy
 
 ![haproxy](https://i.imgur.com/zcAY4gl.png)
-
-
-## Gen Certs and Sync Certs
-
-```bash
-ansible-playbook -i inventory/hosts.ini playbook.yml --tags gen-certs,sync-certs
-```
 
 ## Uninstall Cluster
 

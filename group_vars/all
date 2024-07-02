@@ -27,7 +27,7 @@ containerd:
 kubernetes:
   name: kubernetes
   CERT_TOKEN: wc9s8y.56hgwdkplx2jyqs7
-  cluster_ha: true
+  cluster_ha: false
   kubernetes_version: "1.28"
   version: "1.28.10-1.1"
   vs: "stable-1.28"
