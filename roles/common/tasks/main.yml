@@ -1,107 +1,142 @@
 ---
-- name: "Update package lists"
+- name: Common - Gather the package facts
+  package_facts:
+    manager: "auto"
+
+- name: Common - Update package lists
   apt:
     update_cache: true
     force_apt_get: true
-  tags: common
 
-- name: Install APT Transport HTTPS
-  tags: common
+- name: Common - Install APT Transport HTTPS
   apt:
-    pkg: 
-      - apt-transport-https
-      - ca-certificates
-      - curl
-      - gnupg2
-      - apt-utils
-      - software-properties-common
-      - lsb-release
-    force_apt_get: true
+    name: "{{ item }}"
+    state: latest
+    update_cache: yes
+  loop: 
+    - apt-transport-https
+    - ca-certificates
+    - curl
+    - gnupg
+    - software-properties-common
+    - apt-utils
+    - lsb-release
+  when: "'{{ item }}' not in ansible_facts.packages"
 
-- name: Disable system SWAP
-  tags: common
+# sys container
+- name: Common - Disable system SWAP
   shell: "swapoff -a"
 
-- name: Removes current swaps from the filesystem tab
-  tags: common
+- name: Common - Disable SWAP in fstab (Kubeadm requirement)
+  replace:
+    path: /etc/fstab
+    regexp: '^([^#].*?\sswap\s+sw\s+.*)$'
+    replace: '# \1'
+
+- name: Common - create an empty file for the Containerd module
+  copy:
+    content: ""
+    dest: "{{ containerd.container_module_conf }}"
+    force: no
+
+- name: Common - configure modules for Containerd
+  blockinfile:
+    path: "{{ containerd.container_module_conf }}"
+    block: |
+         overlay
+         br_netfilter
+# end
+
+# sys kubernetes
+- name: Common - create an empty file for Kubernetes sysctl params
+  copy:
+    content: ""
+    dest: "{{ kubernetes.kube_sysctl_conf }}"
+    force: no
+
+- name: Common - configure sysctl params for Kubernetes
   lineinfile:
-    path: "/etc/fstab"
-    regexp: '(?i)^([^#][\S]+\s+(none|swap)\s+swap.*)'
-    line: '# \1'
-    backrefs: true
-    state: present
+    path: "{{ kubernetes.kube_sysctl_conf }}"
+    line: "{{ item }}"
+  with_items:
+    - 'net.bridge.bridge-nf-call-iptables  = 1'
+    - 'net.ipv4.ip_forward                 = 1'
+    - 'net.bridge.bridge-nf-call-ip6tables = 1'
 
-- name: "Ensures that br_netfilter is enabled"
-  become: true
-  modprobe:
-    name: "br_netfilter"
-    state: present
+- name: Common - Fix [ERROR] FileContent iptables
+  shell: |
+    modprobe br_netfilter
+    echo 1 > /proc/sys/net/bridge/bridge-nf-call-iptables
+    echo 1 > /proc/sys/net/ipv4/ip_forward
 
-- name: "Ensures that overlay is enabled"
-  become: true
-  modprobe:
-    name: "overlay"
-    state: present
+- name: Common - Check br_netfilter module
+  shell: lsmod | grep br_netfilter
+  register: br_netfilter_output
+  ignore_errors: true
 
-- name: "Sets the required networking rules"
-  become: true
-  sysctl:
-    name: "{{ item }}"
-    value: "1"
-    state: present
-    reload: true
-  loop:
-    - "net.bridge.bridge-nf-call-iptables"
-    - "net.bridge.bridge-nf-call-ip6tables"
-    - "net.ipv4.ip_forward"
+- name: Common - Check overlay module
+  shell: lsmod | grep overlay
+  register: overlay_output
+  ignore_errors: true
 
-- name: Apply sysctl params without reboot
+- name: Common - Check sysctl settings
+  shell: sysctl net.bridge.bridge-nf-call-iptables net.bridge.bridge-nf-call-ip6tables net.ipv4.ip_forward
+  register: sysctl_output
+  ignore_errors: true
+
+- name: Common - Display output
+  debug:
+    var:
+      br_netfilter_output.stdout_lines
+      overlay_output.stdout_lines
+      sysctl_output.stdout_lines
+  ignore_errors: true
+# end
+
+- name: Common - Apply sysctl params without reboot
   command: sysctl --system
 
-- name: Download Docker GPG key
-  shell: wget -O - https://download.docker.com/linux/ubuntu/gpg > ./docker.key
-  args:
-    chdir: /tmp
-
-- name: Import Docker GPG key
-  shell: gpg --no-default-keyring --keyring ./docker.gpg --import ./docker.key
-  args:
-    chdir: /tmp
-
-- name: Export Docker GPG key to archive keyring
-  shell: gpg --no-default-keyring --keyring ./docker.gpg --export > ./docker-archive-keyring.gpg
-  args:
-    chdir: /tmp
-
-- name: Move Docker archive keyring to trusted GPG directory
-  become: true
-  become_user: root
-  shell: sudo mv /tmp/docker-archive-keyring.gpg /etc/apt/trusted.gpg.d/
-
-- name: Check if Docker repository file exists
-  stat:
-    path: "/etc/apt/sources.list.d/docker-{{ ansible_distribution_release }}.list"
-  register: docker_repo_file
-
-- name: Add Docker's APT repository
-  apt_repository:
-    repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+#################### Containerd ################
+- name: Common - Add Docker GPG key
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
     state: present
-    filename: "docker-{{ ansible_distribution_release }}"
-  when: docker_repo_file.stat.exists == False
 
-- name: Check if Kubernetes repository file exists
-  stat:
-    path: "/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
-  register: k8s_repo_file
+# fix DEPRECATION section in apt-key
+- name: Common - Copy trusted.gpg
+  copy:
+    src: /etc/apt/trusted.gpg
+    dest: /etc/apt/trusted.gpg.d
 
-- name: Get kubernetes apt key
-  shell: >
-    curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-  become: yes
-  when: k8s_repo_file.stat.exists == False
+- name: Common - add Docker's APT repository
+  apt_repository:
+    repo: "deb [arch=amd64] https://download.docker.com/linux/{{ ansible.ansible_distribution|lower }} {{ ansible.ansible_distribution_release }} stable"
+    filename: "{{ containerd.name }}"
+    state: present
+    update_cache: yes
 
-- name: Add kubernetes apt repository
-  shell: >
-    echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
-  become: yes
+#################### Kubernetes ################
+- name: Common - Prepare apt keyring directory.
+  file:
+    path: "{{ kubernetes.kubernetes_keyring_file | dirname }}"
+    state: directory
+    mode: 0755
+
+- name: Common - Get Kubernetes apt key.
+  get_url:
+    url: "https://pkgs.k8s.io/core:/{{ kubernetes.kubernetes_release_channel }}:/v{{ kubernetes.kubernetes_version }}/deb/Release.key"
+    dest: "{{ kubernetes.kubernetes_keyring_file }}"
+    mode: '0644'
+    force: true
+
+- name: Common - Be sure deprecated Kubernetes repository is absent.
+  file:
+    path: "{{ kubernetes.kube_repo_file }}"
+    state: absent
+
+- name: Common - Add Kubernetes repository.
+  apt_repository:
+    repo: "deb [signed-by={{ kubernetes.kubernetes_keyring_file }}] https://pkgs.k8s.io/core:/{{ kubernetes.kubernetes_release_channel }}:/v{{ kubernetes.kubernetes_version }}/deb/ /"
+    filename: "{{ kubernetes.name }}"
+    state: present
+    update_cache: true

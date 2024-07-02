@@ -1,0 +1,60 @@
+---
+# gen token init cluster
+- name: Get kubeadm token
+  shell: "kubeadm token generate"
+  register: token_output
+
+- name: Update token_output in variables all
+  replace:
+    path: "{{ role_path }}/../../group_vars/all"
+    regexp: '^(\\s+CERT_TOKEN:\\s+).*?$'
+    replace: '\\1{{ token_output.stdout }}'
+  become: false
+  delegate_to: localhost
+
+# copy config templates
+- name: Kubernetes Init - Create an empty configuring
+  copy:
+    content: ""
+    dest: "{{ kubernetes.kube_config_file }}"
+    force: no
+
+- name: Kubernetes Init - Copy init-cluster-ha config
+  template:
+    src: "init-cluster-ha.yml.j2"
+    dest: "{{ kubernetes.kube_config_file }}"
+  when: kubernetes.cluster_ha
+
+- name: Kubernetes Init - Copy init-cluster config
+  template:
+    src: "init-cluster.yml.j2"
+    dest: "{{ kubernetes.kube_config_file }}"
+  when: not kubernetes.cluster_ha
+
+- name: Kubernetes Init - Initialize the cluster (this could take some time)
+  shell: "kubeadm init --config {{ kubernetes.kube_config_file }} --upload-certs >> {{ kubernetes.logs_cluster }}"
+  args:
+    chdir: "$HOME/"
+    creates: "{{ kubernetes.logs_cluster }}"
+
+# admin
+- name: Kubernetes Init - Create .kube directory
+  file:
+    path: "{{ kubernetes.config }}"
+    state: directory
+    mode: 0755
+
+- name: Check if config file exists
+  stat:
+    path: "{{ kubernetes.config }}/config"
+  register: config_file
+
+- name: Kubernetes Init - Copy admin.conf to user's kube config
+  copy:
+    src: "{{ kubernetes.kube_config_admin }}"
+    dest: "{{ kubernetes.config }}/config"
+    remote_src: yes
+  when: not config_file.stat.exists
+
+- name: Kubernetes Init - Chown permission config master
+  shell: "sudo chown $(id -u):$(id -g) $HOME/.kube/config"

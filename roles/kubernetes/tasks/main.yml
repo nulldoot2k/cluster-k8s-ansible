@@ -1,15 +1,38 @@
 ---
-- name: Include main tasks
-  include_tasks: k8s.yml
+# kubernetes
+- include_tasks: k8s.yml
 
-- name: Init Master
-  include_tasks: master.yml
-  when: inventory_hostname in groups['master']
+- include_tasks:
+    file: init.yml
+    apply:
+      tags: k8s-init
+  tags: k8s-init
+  when: 
+    - inventory_hostname in groups['master'][0]
+    - "'k8s-init' in ansible_run_tags"
 
-- name: Join Worker
-  include_tasks: worker.yml
+- include_tasks:
+    file: gens.yml
+    apply:
+      tags: k8s-gens
+  tags: k8s-gens
+  when: 
+    - inventory_hostname in groups['master'][0]
+    - "'k8s-gens' in ansible_run_tags"
 
-- name: Uninstall Cluster
-  tags: [uninstall-cluster]
-  include_tasks: uninstall.yml
-  when: "'uninstall-cluster' in (tags | default([]))"
+- include_tasks:
+    file: master.yml
+    apply:
+      tags: join-master
+  tags: join-master
+  when: 
+    - inventory_hostname not in groups['worker']
+    - "'join-master' in ansible_run_tags"
+
+- include_tasks: 
+    file: worker.yml
+    apply:
+      tags: join-worker
+  tags: join-worker
+  when: 
+    - "'join-worker' in ansible_run_tags"

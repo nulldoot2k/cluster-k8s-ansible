@@ -21,7 +21,7 @@ ff00::0 ip6-mcastprefix
 ff02::1 ip6-allnodes
 ff02::2 ip6-allrouters
 
-${NETWORK}.136  node1
-${NETWORK}.137  node2
-${NETWORK}.138  node3
+${NETWORK}.10
+${NETWORK}.11  node2
+${NETWORK}.12  node3
 EOF

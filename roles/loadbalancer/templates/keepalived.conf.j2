@@ -1,0 +1,41 @@
+global_defs {
+    router_id lvs_devel
+    notification_email {}
+    router_id lvs_devel
+    vrrp_skip_check_adv_addr
+    vrrp_garp_interval 0
+    vrrp_gna_interval 0
+}
+vrrp_script check_apiserver {
+    script "/etc/keepalived/check_apiserver.sh"
+    interval 2
+    weight -5
+    fall 3
+    rise 2
+}
+vrrp_instance vi_1 {
+    state {{ 'master' if ansible_host == hostvars[groups['master'][0]]['ansible_host'] else 'backup' }}
+    priority {{ '102' if ansible_host == hostvars[groups['master'][0]]['ansible_host'] else '100' }}
+    interface {{ lb.network_interface }}
+    unicast_src_ip {{ ansible_host }}
+    {% if lb.peer_ha == true %}
+    unicast_peer {
+        {% for host in groups['lb'][1:] %}
+        {{ hostvars[host]['ansible_host'] }}
+        {% endfor %}
+    }
+    {% endif %}
+
+    virtual_router_id 51
+    advert_int 1
+    authentication {
+        auth_type pass
+        auth_pass 4be37dc3b4c90194d1600c483e10ad1d
+    }
+    virtual_ipaddress {
+        {{ lb.virtual_ip }}
+    }
+    track_script {
+       check_apiserver
+    }
+}

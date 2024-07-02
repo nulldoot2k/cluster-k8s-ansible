@@ -1,49 +1,46 @@
 ---
-- name: Create an empty file for Kubeadm configuring
-  copy:
-    content: ""
-    dest: "{{ kubernetes.file_config }}"
-    force: no
+- name: Gen token hash and certs master
+  block:
+    - name: gen token hash
+      shell: kubeadm token create --print-join-command
+      environment:
+          KUBECONFIG: "{{ kubernetes.kube_config_admin }}"
+      register: token_output
+    - name: Get CA Certs
+      shell: "kubeadm init phase upload-certs --upload-certs --config {{ kubernetes.kube_config_file }}"
+      register: cert_output
+      environment:
+          KUBECONFIG: "{{ kubernetes.kube_config_admin }}"
+  when: inventory_hostname == groups['master'][0]
 
-- name: Configuring the container runtime including its cgroup driver
-  blockinfile:
-    path: "{{ kubernetes.file_config }}"
-    block: |
-         kind: ClusterConfiguration
-         apiVersion: kubeadm.k8s.io/v1beta3
-         networking:
-           podSubnet: "{{ kubernetes.CIDR }}"
-         ---
-         kind: KubeletConfiguration
-         apiVersion: kubelet.config.k8s.io/v1beta1
-         runtimeRequestTimeout: "15m"
-         cgroupDriver: "systemd"
-         systemReserved:
-           cpu: 100m
-           memory: 350M
-         kubeReserved:
-           cpu: 100m
-           memory: 50M
-         enforceNodeAllocatable:
-         - pods
+- name: Set fact env
+  set_fact:
+    token_output: "{{ hostvars[groups['master'][0]]['token_output']['stdout_lines'][-1] }}"
+    cert_output: "{{ hostvars[groups['master'][0]]['cert_output']['stdout_lines'][-1] }}"
+  when: inventory_hostname != groups['master'][0]
 
-- name: Initialize the cluster (this could take some time)
-  shell: "kubeadm init --config {{ kubernetes.file_config }} >> {{ kubernetes.logs_cluster }}"
-  args:
-    chdir: /root/
-    creates: "{{ kubernetes.logs_cluster }}"
+- block:
+  - name: Add master node now
+    shell: "{{ token_output }} --control-plane --certificate-key {{ cert_output }} >> {{ kubernetes.logs_cluster }}"
+    args:
+      chdir: $HOME
+      creates: "{{ kubernetes.logs_cluster }}"
 
-- name: Create .kube directory
-  become: yes
-  become_user: root
-  file:
-    path: "{{ kubernetes.config }}"
-    state: directory
-    mode: 0755
-
-- name: Copy admin.conf to user's kube config
-  copy:
-    src: "{{ kubernetes.file_admin_config }}"
-    dest: "{{ kubernetes.config }}/config"
-    remote_src: yes
-    owner: root
+  - name: Kubernetes Init - Create .kube directory
+    file:
+      path: "{{ kubernetes.config }}"
+      state: directory
+      mode: 0755
+  - name: Check if config file exists
+    stat:
+      path: "{{ kubernetes.config }}/config"
+    register: config_file
+  - name: Kubernetes Init - Copy admin.conf to user's kube config
+    copy:
+      src: "{{ kubernetes.kube_config_admin }}"
+      dest: "{{ kubernetes.config }}/config"
+      remote_src: yes
+    when: not config_file.stat.exists
+  - name: Kubernetes Init - Chown permission config slave
+    shell: "sudo chown $(id -u):$(id -g) $HOME/.kube/config"
+  when: inventory_hostname != groups['master'][0]

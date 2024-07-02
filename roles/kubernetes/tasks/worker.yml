@@ -1,20 +1,21 @@
 ---
-- name: Gen token add worker
+- name: Gen token hash and certs master
   block:
-    - name: get join command
+    - name: gen token hash
       shell: kubeadm token create --print-join-command
-      register: join_command_raw
-    - name: set join command
-      set_fact:
-        join_command: "{{ join_command_raw.stdout_lines[0] }}"
-  when: inventory_hostname in groups['master']
+      environment:
+          KUBECONFIG: "{{ kubernetes.kube_config_admin }}"
+      register: token_output
+  when: inventory_hostname == groups['master'][0]
 
-- name: Add worker node now
-  block:
-  - name: TCP port 6443 on master is reachable from worker
-    wait_for: "host={{ hostvars[groups['master'][0]]['ansible_host'] }} port=6443 timeout=1"
-  - name: join cluster
-    shell: "{{ hostvars[groups['master'][0]].join_command }} >> {{ kubernetes.logs_nodes }}"
+- name: Set fact env
+  set_fact:
+    token_output: "{{ hostvars[groups['master'][0]]['token_output']['stdout_lines'][-1] }}"
+  when: inventory_hostname != groups['master'][0]
+
+- block:
+  - name: Add worker node now
+    shell: "{{ token_output }} >> {{ kubernetes.logs_nodes }}"
     args:
       chdir: $HOME
       creates: "{{ kubernetes.logs_nodes }}"

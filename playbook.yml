@@ -1,79 +1,58 @@
 ---
-
-- name: Checking Ping Results
-  hosts: [all]
+- name: Checking Host Information
+  hosts: ["{{ user_input if user_input != '' else 'all' }}"]
   gather_facts: false
-  tasks:
-
-    - name: Ping the hosts
-      ping:
-      register: ping_result
-
-    - name: Display Ping Result
-      debug:
-        var: ping_result
-
-    - name: Display IP and User
-      debug:
-        msg: "Host {{ inventory_hostname }} ({{ ansible_host }}) - User: {{ ansible_user }}"
-
-- hosts: [all]
-  gather_facts: false
+  roles:
+    - { role: checking-hosts, tags: checking-hosts }
   vars_prompt:
     - name: user_input
-      prompt: "Do you want to continue (yes/no)?"
+      prompt: "Enter the group name in hosts (or press Enter for 'all' to ignore)"
+      default: "{{ groups | join(',') }}"
       private: no
 
-  tasks:
-    - name: Validate user input
-      fail:
-        msg: "See you again!"
-      when: user_input | lower not in ['yes', 'y']
+- name: Setup NFS
+  hosts: [ nfs ]
+  roles:
+    - { role: nfs, tags: nfs }
+
+- name: Ensure Nginx
+  tags: [nginx,haproxy,keepalived]
+  hosts: [ lb ] 
+  roles: [ loadbalancer ]
+
+- name: Ensure cfssl
+  hosts: [localhost:master]
+  roles:
+    - { role: cert-cfssl, tags: cfssl,gen-certs,sync-certs }
 
 - name: Ensure common
-  tags: [ common ]
-  hosts: [ cluster ] 
-  become: true
-  roles: [ common ]
-
-- name: Ensure docker
-  tags: ['docker']
   hosts: [cluster]
-  become: true
-  roles: [ docker ]
+  roles:
+    - { role: common, tags: common }
+    - { role: containerd, tags: containerd }
 
 - name: Deploy Cluster K8s
-  tags: ['k8s']
   hosts: [cluster]
-  become: true
-  roles: [kubernetes]
+  roles:
+    - { role: etcd, tags: etcd, when: "inventory_hostname in groups['master']" }
+    - { role: kubernetes, tags: k8s,k8s-init,join-master,join-worker}
 
-- name: Setup CNI Flannel
-  hosts: [master]
-  become: true
-  roles: [flannel]
+- name: Setup Component
+  hosts: ["master[0]"]
+  run_once: true
+  roles:
+    - { role: cni, tags: cni-flannel,cni-calico }
+    - { role: cert-manager, tags: cert }
+    - { role: metallb, tags: metallb }
+    - { role: ingress-nginx, tags: ingress }
+    - { role: nfs, tags: k8s-nfs }
 
-- name: Setup CNI Calico
-  hosts: [master]
-  become: true
-  roles: [calico]
-
-- name: Setup Cert Manager
-  hosts: [master]
-  become: true
-  roles: [cert-manager]
-
-- name: Setup Metallb
-  hosts: [master]
-  become: true
-  roles: [metallb]
-
-- name: Setup Controller Ingress Nginx
-  hosts: [master]
-  become: true
-  roles: [ingress-nginx]
-
-- name: Setup NFS
-  hosts: [all]
-  become: true
-  roles: [nfs]
+- name: Uninstall
+  tags:
+    - uninstall
+    - uninstall-kubernetes
+    - uninstall-containerd
+    - uninstall-nginx
+    - uninstall-common
+  hosts: [ all ]
+  roles: [ uninstall ]

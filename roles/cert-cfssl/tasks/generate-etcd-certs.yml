@@ -1,0 +1,43 @@
+---
+- name: Create gcerts directory if not exists
+  file:
+    path: "{{ role_path }}/files/cert-updates"
+    state: directory
+  become: false
+
+- name: Generate etcd.json from Jinja2 template
+  template:
+    src: etcd-csr.json.j2
+    dest: "{{ role_path }}/files/cert-updates/etcd-csr.json"
+  become: false
+
+- name: CFSSL - Generate CA certs
+  shell: |
+    /usr/local/bin/cfssl gencert -initca {{role_path}}/files/certs/ca-csr.json | /usr/local/bin/cfssljson -bare ca
+  args:
+    chdir: "{{ role_path }}/files/cert-updates"
+  become: false
+
+- name: CFSSL - Generate etcd client certs
+  shell: |
+    /usr/local/bin/cfssl gencert -ca={{role_path}}/files/cert-updates/ca.pem -ca-key={{role_path}}/files/cert-updates/ca-key.pem -config={{role_path}}/files/certs/ca-config.json -profile=etcd {{role_path}}/files/cert-updates/etcd-csr.json | /usr/local/bin/cfssljson -bare etcd
+  args:
+    chdir: "{{ role_path }}/files/cert-updates"
+  become: false
+
+- name: CFSSL - Find unnecessary keys
+  find:
+    paths: "{{ role_path }}/files/cert-updates"
+    patterns:
+      - "*.key"
+      - "*.csr"
+      - "*.json"
+  register: unnecessary_keys
+  become: false
+
+- name: Delete unnecessary keys
+  file:
+    path: "{{ item.path }}"
+    state: absent
+  loop: "{{ unnecessary_keys.files }}"
+  become: false

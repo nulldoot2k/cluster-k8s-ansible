@@ -1,0 +1,25 @@
+---
+# proxy
+- include_tasks:
+    file: nginx.yml
+    apply:
+      tags: nginx
+  tags: nginx
+  when: 
+    - "'nginx' in ansible_run_tags"
+
+- include_tasks:
+    file: haproxy.yml
+    apply:
+      tags: haproxy
+  tags: haproxy
+  when: 
+    - "'haproxy' in ansible_run_tags"
+
+- include_tasks: 
+    file: keepalived.yml
+    apply:
+      tags: keepalived
+  tags: keepalived
+  when: 
+    - "'keepalived' in ansible_run_tags"
