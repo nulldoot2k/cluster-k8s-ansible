@@ -75,14 +75,15 @@
   with_items:
     - "~/.kube"
     - "/etc/cni/"
+    - "/etc/etcd/"
     - "/etc/kubernetes/"
+    - "/etc/docker"
     - "/var/lib/dockershim"
     - "/var/lib/etcd"
     - "/var/lib/kubelet"
     - "/var/lib/etcd2/"
     - "/var/run/kubernetes"
     - "/var/lib/docker"
-    - "/etc/docker"
     - "/var/run/docker.sock"
   ignore_errors: yes
 

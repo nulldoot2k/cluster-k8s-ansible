@@ -24,6 +24,25 @@
       state: absent
       purge: yes
       autoremove: yes
+
+  - name: Server - Remove NFS access rules
+    iptables:
+      chain: INPUT
+      protocol: tcp
+      destination_port: nfs
+      source: "{{ item }}"
+      jump: ACCEPT
+      state: absent
+    loop: "{{ nfs_storage.whitelist_ips }}"
+    become: yes
+
+  - name: Server - Drop NFS access for all other IP addresses
+    iptables:
+      chain: INPUT
+      protocol: tcp
+      destination_port: nfs
+      jump: DROP
+    become: yes
   when: inventory_hostname in groups['nfs_server']
 
 - block:

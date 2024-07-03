@@ -12,13 +12,13 @@
     pkg: nfs-common
     force_apt_get: true
 
-- name: Client - Check mount directory exists
+- name: Client - Check if mount directory exists
   stat:
     path: "{{ nfs.nfs_client_mnt_point }}"
   register: _nfs_mountpoint
   failed_when: false
 
-- name: Client - Umount stale nfs if mount
+- name: Client - Umount stale NFS if mounted
   mount:
     path: "{{ nfs.nfs_client_mnt_point }}"
     state: unmounted
@@ -28,6 +28,7 @@
   file:
     path: "{{ nfs.nfs_client_mnt_point }}"
     state: directory
+  when: "not _nfs_mountpoint.stat.exists"
 
 - name: Client - Mount filesystem
   mount:
@@ -36,3 +37,4 @@
     opts: "{{ item['nfs.nfs_client_mnt_options'] | default(nfs.nfs_client_mnt_options, true) | default(omit, true) }}"
     fstype: nfs4
     state: "{{ nfs.nfs_client_mnt_state }}"
+  when: "not _nfs_mountpoint.stat.exists or _nfs_mountpoint.stat.isreg"

@@ -1,2 +1,3 @@
 ---
 # default
+virtual_ip: "{{ hostvars[groups['vip'][0]]['ansible_host'] }}"

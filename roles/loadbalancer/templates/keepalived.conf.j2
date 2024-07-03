@@ -33,7 +33,7 @@ vrrp_instance vi_1 {
         auth_pass 4be37dc3b4c90194d1600c483e10ad1d
     }
     virtual_ipaddress {
-        {{ lb.virtual_ip }}
+        {{ virtual_ip }}
     }
     track_script {
        check_apiserver

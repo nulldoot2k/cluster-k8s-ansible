@@ -5,9 +5,9 @@ ansible:
 
 lb:
   ansible_user_id_auth: ansible
+  haproxy_vip: false
   peer_ha: false
   network_interface: 'eth0'
-  virtual_ip: "{{ hostvars['loadbalancer']['ansible_host'] }}"
   lb_path_enabled: "/etc/nginx/sites-enabled/"
   lb_path_conf: "/etc/nginx/"
   lb_path_tmp: "/tmp/certs/"
@@ -98,7 +98,6 @@ nfs:
 nfs_storage:
   whitelist_ips: 
     - 192.168.101.0/24
-    - 10.3.52.0/22
     - 10.0.2.0/24
   archive_delete: "false"
   storageclass_name: managed-nfs-storage
