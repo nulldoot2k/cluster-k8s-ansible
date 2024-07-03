@@ -3,15 +3,6 @@
 - include_tasks: k8s.yml
 
 - include_tasks:
-    file: etcd.yml
-    apply:
-      tags: k8s-etcd
-  tags: k8s-etcd
-  when: 
-    - inventory_hostname not in groups['worker']
-    - "'k8s-etcd' in ansible_run_tags"
-
-- include_tasks:
     file: init.yml
     apply:
       tags: k8s-init

@@ -1,9 +1,9 @@
 ---
-# - name: install keepalived
-#   apt:
-#     update_cache: yes
-#     name: keepalived
-#     state: present
+- name: install keepalived
+  apt:
+    update_cache: yes
+    name: keepalived
+    state: present
 
 - name: deploy keepalived script
   template:
