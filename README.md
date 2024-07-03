@@ -71,23 +71,15 @@ Successfully uninstalled rake-13.2.1
 
 ## Usage
 
-1, Clone this Git repository to your local working station:
-```bash
-git clone git@git.paas.vn:datvm/ansible-k8s.git
-```
-2, Change directory to the root directory of the project
-```bash
-cd ansible-k8s
-```
-3, Edit the values of the default variables to your requirements
+1, Edit the values of the default variables to your requirements
 ```bash
 vi group_vars/all
 ```
-4, Edit the Ansible inventory file to your requirements
+2, Edit the Ansible inventory file to your requirements
 ```bash
 vi inventory/hosts.ini
 ```
-5, Validate host and user
+3, Validate host and user
 
 ```bash
 ansible-playbook -i inventory/hosts.ini playbook.yml --tags checking-hosts
@@ -95,7 +87,7 @@ ansible-playbook -i inventory/hosts.ini playbook.yml --tags checking-hosts
 
 ### For Cluster Single
 
-Require Modify [Line](https://git.paas.vn/datvm/ansible-k8s/-/blob/master/group_vars/all?ref_type=heads#L30)
+Require Modify [Line]()
 
 ```bash
 cluster_ha: true --> false
@@ -109,7 +101,7 @@ ansible-playbook -i inventory/hosts.ini playbook.yml --tags common,containerd,k8
 
 If setup NFS
 
-Modify variable: [whitelist](https://git.paas.vn/datvm/ansible-k8s/-/blob/master/group_vars/all?ref_type=heads#L99) and Run playbook
+Modify variable: [whitelist]() and Run playbook
 
 ```bash
 ansible-playbook -i inventory/hosts.ini playbook.yml --tags nfs,k8s-nfs
@@ -117,7 +109,7 @@ ansible-playbook -i inventory/hosts.ini playbook.yml --tags nfs,k8s-nfs
 
 ### For Cluster HA ETCD + K8s
 
-Require Modify [Line](https://git.paas.vn/datvm/ansible-k8s/-/blob/master/group_vars/all?ref_type=heads#L30)
+Require Modify [Line]()
 
 ```bash
 cluster_ha: false --> true
