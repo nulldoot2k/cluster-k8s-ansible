@@ -1,0 +1,65 @@
+---
+- block:
+  - name: Server - Unmount NFS filesystem
+    mount:
+      path: "{{ nfs.nfs_export }}"
+      state: unmounted
+
+  - name: Server - Remove NFS mount point directory
+    file:
+      path: "{{ nfs.nfs_export }}"
+      state: absent
+
+  - name: Server - Remove NFS export from /etc/exports
+    lineinfile:
+      path: /etc/exports
+      state: absent
+      regexp: "{{ nfs.nfs_export }}"
+
+  - name: Server - Ensure NFS Server is removed
+    package:
+      name:
+        - nfs-kernel-server
+        - nfs-utils
+      state: absent
+      purge: yes
+      autoremove: yes
+
+  - name: Server - Remove NFS access rules
+    iptables:
+      chain: INPUT
+      protocol: tcp
+      destination_port: nfs
+      source: "{{ item }}"
+      jump: ACCEPT
+      state: absent
+    loop: "{{ nfs_storage.whitelist_ips }}"
+    become: yes
+
+  - name: Server - Drop NFS access for all other IP addresses
+    iptables:
+      chain: INPUT
+      protocol: tcp
+      destination_port: nfs
+      jump: DROP
+    become: yes
+  when: inventory_hostname in groups['nfs_server']
+
+- block:
+  - name: Client - Unmount NFS filesystem (lazy unmount)
+    shell: umount -l "{{ nfs.nfs_client_mnt_point }}"
+    ignore_errors: true
+
+  - name: Client - Remove NFS mount point directory
+    file:
+      path: "{{ nfs.nfs_client_mnt_point }}"
+      state: absent
+
+  - name: Client - Uninstall NFS packages Server
+    apt:
+      name: nfs-common
+      name: nfs-utils
+      state: absent
+      purge: yes
+      autoremove: yes
+  when: inventory_hostname in groups['worker']

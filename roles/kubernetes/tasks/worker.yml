@@ -1,0 +1,22 @@
+---
+- name: Gen token hash and certs master
+  block:
+    - name: gen token hash
+      shell: kubeadm token create --print-join-command
+      environment:
+          KUBECONFIG: "{{ kubernetes.kube_config_admin }}"
+      register: token_output
+  when: inventory_hostname == groups['master'][0]
+
+- name: Set fact env
+  set_fact:
+    token_output: "{{ hostvars[groups['master'][0]]['token_output']['stdout_lines'][-1] }}"
+  when: inventory_hostname != groups['master'][0]
+
+- block:
+  - name: Add worker node now
+    shell: "{{ token_output }} >> {{ kubernetes.logs_nodes }}"
+    args:
+      chdir: $HOME
+      creates: "{{ kubernetes.logs_nodes }}"
+  when: inventory_hostname in groups['worker']

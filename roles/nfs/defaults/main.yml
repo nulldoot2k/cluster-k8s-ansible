@@ -1,0 +1,9 @@
+---
+# nfs_enable:
+#   server: true
+#   clients: true
+#
+# nfs_configurations:
+#   - nfs_enable:
+#       server: true
+#       clients: true

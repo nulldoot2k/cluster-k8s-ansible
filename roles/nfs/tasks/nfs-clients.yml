@@ -1,0 +1,40 @@
+---
+
+- name: Client - Updates package lists
+  become: true
+  apt:
+    update_cache: true
+    force_apt_get: true
+
+- name: Client - Install NFS
+  become: true
+  apt:
+    pkg: nfs-common
+    force_apt_get: true
+
+- name: Client - Check if mount directory exists
+  stat:
+    path: "{{ nfs.nfs_client_mnt_point }}"
+  register: _nfs_mountpoint
+  failed_when: false
+
+- name: Client - Umount stale NFS if mounted
+  mount:
+    path: "{{ nfs.nfs_client_mnt_point }}"
+    state: unmounted
+  when: "'Stale file handle' in _nfs_mountpoint.msg | default('')"
+
+- name: Client - Ensure mount directory exists
+  file:
+    path: "{{ nfs.nfs_client_mnt_point }}"
+    state: directory
+  when: "not _nfs_mountpoint.stat.exists"
+
+- name: Client - Mount filesystem
+  mount:
+    path: "{{ nfs.nfs_client_mnt_point }}"
+    src: "{{ hostvars[groups['nfs_server'][0]]['ansible_host'] }}:{{ nfs.nfs_export }}"
+    opts: "{{ item['nfs.nfs_client_mnt_options'] | default(nfs.nfs_client_mnt_options, true) | default(omit, true) }}"
+    fstype: nfs4
+    state: "{{ nfs.nfs_client_mnt_state }}"
+  when: "not _nfs_mountpoint.stat.exists or _nfs_mountpoint.stat.isreg"

@@ -1,0 +1,58 @@
+---
+- name: Checking Host Information
+  hosts: ["{{ user_input if user_input != '' else 'all' }}"]
+  gather_facts: false
+  roles:
+    - { role: checking-hosts, tags: checking-hosts }
+  vars_prompt:
+    - name: user_input
+      prompt: "Enter the group name in hosts (or press Enter for 'all' to ignore)"
+      default: "{{ groups | join(',') }}"
+      private: no
+
+- name: Setup NFS
+  hosts: [ nfs ]
+  roles:
+    - { role: nfs, tags: nfs }
+
+- name: Ensure Nginx
+  tags: [nginx,haproxy,keepalived]
+  hosts: [ lb ] 
+  roles: [ loadbalancer ]
+
+- name: Ensure cfssl
+  hosts: [localhost:master]
+  roles:
+    - { role: cert-cfssl, tags: cfssl,gen-certs,sync-certs }
+
+- name: Ensure common
+  hosts: [cluster]
+  roles:
+    - { role: common, tags: common }
+    - { role: containerd, tags: containerd }
+
+- name: Deploy Cluster K8s
+  hosts: [cluster]
+  roles:
+    - { role: etcd, tags: etcd, when: "inventory_hostname in groups['master']" }
+    - { role: kubernetes, tags: k8s,k8s-etcd,k8s-init,join-master,join-worker}
+
+- name: Setup Component
+  hosts: ["master[0]"]
+  run_once: true
+  roles:
+    - { role: cni, tags: cni-flannel,cni-calico }
+    - { role: cert-manager, tags: cert }
+    - { role: metallb, tags: metallb }
+    - { role: ingress-nginx, tags: ingress }
+    - { role: nfs, tags: k8s-nfs }
+
+- name: Uninstall
+  tags:
+    - uninstall
+    - uninstall-kubernetes
+    - uninstall-containerd
+    - uninstall-nginx
+    - uninstall-common
+  hosts: [ all ]
+  roles: [ uninstall ]

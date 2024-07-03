@@ -1,0 +1,75 @@
+---
+- name: Common Uninstall - Gather the package facts
+  package_facts:
+    manager: "auto"
+
+- name: Common Uninstall - Delete Kubernetes apt GPG key
+  file:
+    path: "{{ kubernetes.kubernetes_keyring_file }}"
+    state: absent
+
+- name: Common Uninstall - Remove Kubernetes repository
+  file:
+    path: "{{ kubernetes.kube_repo_file }}"
+    state: absent
+
+- name: Common Uninstall - Remove Container repository
+  file:
+    path: "{{ containerd.container_repo_list }}"
+    state: absent
+
+- name: Common Uninstall - Delete Container GPG key
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: absent
+
+# Check file modules config container exists
+- name: Common Uninstall - Check if modules configuration file exists
+  stat:
+    path: "{{ containerd.container_module_conf }}"
+  register: modules_file_stat
+
+- name: Common Uninstall - Remove modules configuration for Containerd
+  file:
+    path: "{{ containerd.container_module_conf }}"
+    state: absent
+  when: modules_file_stat.stat.exists
+
+- name: Common Uninstall - Delete empty file for Containerd module
+  file:
+    path: "{{ containerd.container_module_conf}}"
+    state: absent
+# end
+
+- name: Common Uninstall - Remove SWAP line in fstab (Kubeadm requirement)
+  replace:
+    path: /etc/fstab
+    regexp: '^# ([^#].*?\sswap\s+sw\s+.*)$'
+    replace: '\1'
+
+- name: Common Uninstall - Enable system SWAP
+  shell: "swapon -a"
+
+- name: Common Uninstall - Delete Kubernetes sysctl params file
+  file:
+    path: "{{ kubernetes.kube_sysctl_conf }}"
+    state: absent
+
+# uninstall package
+- name: Common Uninstall - Remove APT packages
+  apt:
+    name: "{{ item }}"
+    state: absent
+    update_cache: yes
+  loop:
+    - apt-transport-https
+    - curl
+    - gnupg
+    - software-properties-common
+    - apt-utils
+    - lsb-release
+    - python3-pip
+    - virtualenv
+  when: "'{{item}}' in ansible_facts.packages"
+  ignore_errors: True
+# end

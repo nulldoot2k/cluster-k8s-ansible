@@ -1,0 +1,15 @@
+---
+# cni
+- name: Include flannel tasks
+  include_tasks: 
+    file: flannel.yml
+    apply:
+      tags: cni-flannel
+  tags: cni-flannel
+
+- name: Include calico tasks
+  include_tasks:
+    file: calico.yml
+    apply:
+      tags: cni-calico
+  tags: cni-calico

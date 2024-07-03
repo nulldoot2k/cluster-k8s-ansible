@@ -1,0 +1,21 @@
+---
+- name: start nginx
+  service:
+    state: started
+    daemon_reload: yes
+    name: nginx
+    enabled: yes
+
+- name: restart keepalived
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    name: keepalived
+    enabled: yes
+
+- name: restart haproxy
+  service:
+    state: restarted
+    daemon_reload: yes
+    name: haproxy
+    enabled: yes

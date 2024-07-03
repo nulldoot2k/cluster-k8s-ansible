@@ -1,0 +1,105 @@
+ansible:
+  ansible_architecture: amd64 # amd64 or x86_64
+  ansible_distribution: ubuntu
+  ansible_distribution_release: focal
+
+lb:
+  ansible_user_id_auth: ansible
+  haproxy_vip: false
+  peer_ha: false
+  network_interface: 'eth0'
+  virtual_ip: "{{ hostvars[groups['lb'][0]]['ansible_host'] }}"
+  lb_path_enabled: "/etc/nginx/sites-enabled/"
+  lb_path_conf: "/etc/nginx/"
+  lb_path_tmp: "/tmp/certs/"
+  lb_path_kube: "/etc/nginx/kube.d/"
+  haproxy_stats_port: 9000
+  lb_port_443: 443
+  kube_proxy_port: 6443
+  etcd_proxy_port: 2379
+
+containerd:
+  name: containerd
+  container_runtime: containerd
+  container_path_conf: "/etc/containerd/"
+  container_repo_list: "/etc/apt/sources.list.d/containerd.list"
+  container_module_conf: "/etc/modules-load.d/containerd.conf"
+
+kubernetes:
+  name: kubernetes
+  CERT_TOKEN: jrmvvf.6v58khgku1p14xd4
+  cluster_ha: true
+  kubernetes_version: "1.28"
+  version: "1.28.10-1.1"
+  vs: "stable-1.28"
+  CIDR: "10.244.0.0/16"
+  kubernetes_apt_release_channel: "stable"
+  master_node: "{{ hostvars[groups['master'][0]]['ansible_host'] }}"
+  config: "~/.kube"
+  kubernetes_keyring_file: "/etc/apt/keyrings/kubernetes-apt-keyring.asc"
+  kubernetes_release_channel: "stable"
+  kube_config_file: "/etc/kubernetes/kubeadm-config.yaml"
+  kube_repo_file: "/etc/apt/sources.list.d/kubernetes.list"
+  kube_config_admin: "/etc/kubernetes/admin.conf"
+  kube_sysctl_conf: "/etc/sysctl.d/10-kubernetes.conf"
+  kube_config_dir: "/etc/kubernetes"
+  kube_cert_dir: "/etc/kubernetes/pki"
+  kube_etcd_ca_dir: "/etc/kubernetes/pki/etcd"
+  logs_cluster: "cluster_initialized.log"
+  logs_pods_flannel: "pod_network_setup_flannel.log"
+  logs_pods_calico: "pod_network_setup_calico.log"
+  logs_nodes: "node_joined.log"
+
+etcd:
+  etcd_version: "3.5.13"
+  etcd_architecture: "amd64"
+  etcd_download_dir: "/tmp"
+  etcd_path_conf: "/etc/etcd"
+  etcd_path_lib: "/var/lib/etcd/"
+  etcd_path_cert: "/var/lib/etcd/certs"
+  etcd_path_data: "/var/lib/etcd/data"
+  etcd_path_bin: "/usr/local/bin"
+  etcd_path_systemd: "/etc/systemd/system"
+
+cfssl:
+  cfssl_version: "1.6.5"
+  cfssl_bin_directory: "/usr/local/bin"
+  cfssl_os: "linux"
+  cfssl_arch: "amd64"
+
+cert_manager:
+  version: "v1.13.3"
+
+cni:
+  calico:
+    version: "v3.26.4"
+  plannel:
+    version: "master"
+
+metallb:
+  addresses: 192.168.101.0/24
+  version: "v0.13.12"
+
+ingress_nginx:
+  version: "v1.9.4"
+  provider: "baremetal"
+
+nfs:
+  nfs_fstype: "ext4"
+  nfs_export_subnet: "*"
+  nfs_export_options: "rw,sync,no_subtree_check,insecure,no_root_squash"
+  nfs_disk_location:
+  nfs_client_mnt_options: 
+  nfs_client_mnt_state: mounted
+  nfs_export: "/mnt/nfs/promdata"
+  nfs_client_mnt_point: "/mnt/nfs/promdata"
+  nfs_path_tmp: "/tmp/nfs/" # folder contain script deploy storageclass from server master
+  server: "{{ inventory_hostname in groups['nfs_server'] }}"
+  clients: "{{ inventory_hostname in groups['worker'] }}"
+nfs_storage:
+  whitelist_ips: 
+    - 192.168.101.0/24
+  archive_delete: "false"
+  storageclass_name: managed-nfs-storage
+  deployment_name: nfs-client-provisioner
+  provisioner: k8s-sigs.io/nfs-subdir-external-provisioner

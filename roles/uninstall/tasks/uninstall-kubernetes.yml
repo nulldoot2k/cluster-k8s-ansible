@@ -1,0 +1,110 @@
+---
+- name: Uninstall Kubernetes - Gather the package facts
+  package_facts:
+    manager: "auto"
+
+- name: Uninstall Kubernetes - Check if kubeadm is installed
+  command: kubeadm version
+  register: kubeadm_version
+  changed_when: false
+  ignore_errors: True
+
+- name: Uninstall Kubernetes - Reset Kubernetes component
+  shell: "kubeadm reset --force --cri-socket=/var/run/{{ containerd.container_runtime }}/{{ containerd.container_runtime }}.sock"
+  ignore_errors: True
+  when: kubeadm_version|failed or kubeadm_version.stdout is not search('kubeadm version')
+
+- name: Uninstall Kubernetes - Remove Kubernetes related packages
+  apt:
+    name: "{{ item }}"
+    state: absent
+    update_cache: yes
+    force_apt_get: yes
+  loop:
+    - kubeadm
+    - kubectl
+    - kubelet
+    - kubernetes-cni 
+    - kube*
+  args:
+    force: yes
+  ignore_errors: yes
+  when: "'{{ item }}' in ansible_facts.packages"
+
+- name: Uninstall Kubernetes - Remove containers/ps
+  shell: |
+    docker rm -v -f $(docker ps -qa)
+  ignore_errors: yes
+
+- name: Uninstall Kubernetes - Remove containers/volumes
+  shell: |
+    docker rm -vf $(docker ps -aq)
+  ignore_errors: yes
+
+- name: Uninstall Kubernetes - Remove containers/images
+  shell: |
+    docker rmi -f $(docker images -aq)
+  ignore_errors: yes
+
+- name: Uninstall Kubernetes - Remove container packages
+  apt:
+    name: "{{ item }}"
+    state: absent
+    allow_change_held_packages: yes
+  loop:
+    - docker-engine
+    - docker
+    - docker.io
+    - docker-ce
+    - docker-ce-cli
+    - containerd
+    - containerd.io
+    - runc
+  ignore_errors: yes
+  when: "'{{ item }}' in ansible_facts.packages"
+
+- name: Uninstall Kubernetes - autoremove
+  apt:
+    autoremove: yes
+  ignore_errors: yes
+
+- name: Uninstall Kubernetes - Remove components folders
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - "~/.kube"
+    - "/etc/cni/"
+    - "/etc/etcd/"
+    - "/etc/kubernetes/"
+    - "/etc/docker"
+    - "/var/lib/dockershim"
+    - "/var/lib/etcd"
+    - "/var/lib/kubelet"
+    - "/var/lib/etcd2/"
+    - "/var/run/kubernetes"
+    - "/var/lib/docker"
+    - "/var/run/docker.sock"
+  ignore_errors: yes
+
+- name: Uninstall Kubernetes - Remove group container (optional)
+  group:
+    name: "{{ containerd.name }}"
+    state: absent
+  ignore_errors: yes
+
+- name: Uninstall Kubernetes - Clear iptables
+  command: iptables -F && iptables -X
+  ignore_errors: yes
+
+- name: Uninstall Kubernetes - Clear iptables NAT table
+  command: iptables -t nat -F && iptables -t nat -X
+  ignore_errors: yes
+
+- name: Uninstall Kubernetes - Clear iptables RAW table
+  command: iptables -t raw -F && iptables -t raw -X
+  ignore_errors: yes
+
+- name: Uninstall Kubernetes - Clear iptables MANGLE table
+  command: iptables -t mangle -F && iptables -t mangle -X
+  ignore_errors: yes

@@ -1,0 +1,31 @@
+---
+- name: Checking Hosts
+  block:
+  - name: Ping the hosts
+    ping:
+    register: ping_result
+
+  - name: Display Ping Result
+    debug:
+      var: ping_result
+    when: user_input == "" or user_input == "all" or user_input in groups
+
+  - name: Display IP and User
+    debug:
+      msg: "Host {{ inventory_hostname }} ({{ hostvars[inventory_hostname]['ansible_host'] }}) - User: {{ ansible_user }}"
+
+- block:
+  - pause:
+      prompt: "Do you want to continue (yes/no)?"
+      echo: true
+    register: result
+    run_once: true
+
+  - name: Passed
+    debug:
+      msg: "{{ inventory_hostname }} ==> passed"
+    when: result.user_input | lower in ["yes", "y"]
+
+  - name: Lossed
+    fail: msg="Goodbye see you again!"
+    when: result.user_input | lower not in ["yes", "y"]
