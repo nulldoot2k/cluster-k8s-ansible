@@ -5,9 +5,8 @@ ansible:
 
 lb:
   ansible_user_id_auth: ansible
-  haproxy_vip: false
-  peer_ha: false
-  network_interface: 'eth0'
+  haproxy_vip: true
+  network_interface: 'ens33'
   virtual_ip: "{{ hostvars[groups['lb'][0]]['ansible_host'] }}"
   lb_path_enabled: "/etc/nginx/sites-enabled/"
   lb_path_conf: "/etc/nginx/"

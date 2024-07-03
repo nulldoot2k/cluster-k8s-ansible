@@ -21,11 +21,7 @@ defaults
     timeout tunnel 1h
 
 listen stats 
-{% if lb.haproxy_vip %}
-  bind {{ virtual_ip }}:{{ lb.haproxy_stats_port }}
-{% else %}
   bind *:{{ lb.haproxy_stats_port }}
-{% endif %}
   mode http
   stats enable
   stats hide-version
@@ -35,24 +31,6 @@ listen stats
   stats auth {{ lb.ansible_user_id_auth }}:k8sHA
   stats admin if LOCALHOST
 
-{% if lb.haproxy_vip %}
-#############################
-#  api-vip-cluster config
-#############################
-frontend vip-proxy-cluster
-  bind {{ virtual_ip }}:{{ lb.kube_proxy_port }}
-  mode tcp
-  default_backend back-vip-cluster-proxy
-
-backend back-vip-cluster-proxy
-  mode tcp
-  option tcp-check
-  default-server inter 10s downinter 5s rise 2 fall 2 slowstart 60s maxconn 250 maxqueue 256 weight 100
-  balance roundrobin
-  {% for item in groups['master'] %}
-    server {{ item }} {{hostvars[item]["ansible_host"]}}:{{ lb.kube_proxy_port }} check
-  {% endfor %}
-{% else %}
 #############################
 #  api-proxy config
 #############################
@@ -70,24 +48,7 @@ backend back-api-proxy
   {% for item in groups['master'] %}
     server {{ item }} {{hostvars[item]["ansible_host"]}}:{{ lb.kube_proxy_port }} check
   {% endfor %}
-{% endif %}
 
-{% if lb.haproxy_vip %}
-#############################
-#  api-vip-etcd config
-#############################
-frontend vip-etcd-proxy
-  bind {{ virtual_ip }}:{{ lb.kube_proxy_port }}
-  mode tcp
-  default_backend back-vip-etcd-proxy
-
-backend back-vip-etcd-proxy
-  mode tcp
-  balance roundrobin
-  {% for item in groups['master'] %}
-    server {{ item }} {{hostvars[item]["ansible_host"]}}:{{ lb.etcd_proxy_port }} check
-  {% endfor %}
-{% else %}
 #############################
 #  etcd config
 #############################
@@ -104,26 +65,7 @@ backend back-etcd-proxy
   {% for item in groups['master'] %}
     server {{ item }} {{hostvars[item]["ansible_host"]}}:{{ lb.etcd_proxy_port }} check
   {% endfor %}
-{% endif %}
 
-# {% if lb.haproxy_vip %}
-# #############################
-# #  api-vip-nodeport config
-# #############################
-# frontend vip-nodeport-proxy
-#   bind {{ virtual_ip }}:{{ lb.kube_proxy_port }}
-#   mode tcp
-#   default_backend back-vip-nodeport-proxy
-#
-# backend back-vip-nodeport-proxy
-#   mode tcp
-#   timeout connect 10s
-#   timeout server 10s
-#   balance roundrobin
-#   {% for item in groups['master'] %}
-#     server {{ item }} {{hostvars[item]["ansible_host"]}}
-#   {% endfor %}
-# {% else %}
 # #############################
 # #  nodeport config
 # #############################
@@ -142,4 +84,3 @@ backend back-etcd-proxy
 #   {% for item in groups['master'] %}
 #     server {{ item }} {{hostvars[item]["ansible_host"]}}
 #   {% endfor %}
-# {% endif %}

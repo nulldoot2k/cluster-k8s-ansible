@@ -3,8 +3,12 @@
   "hosts": [
     "localhost",
     "127.0.0.1",
-    "{{ hostvars[groups['lb'][0]]['ansible_host'] }}",
-
+{% if lb.haproxy_vip %}
+    "{{ hostvars[groups['vip'][0]]['ansible_host'] }}",
+    {% endif %}
+    {%- for host in groups['lb'] -%}
+    "{{ hostvars[host]['ansible_host'] }}"{% if not loop.last %}, {% endif %}
+    {%- endfor -%},
     {%- for host in groups['master'] -%}
     "{{ hostvars[host]['ansible_host'] }}"{% if not loop.last %}, {% endif %}
     {%- endfor -%}
