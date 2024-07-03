@@ -145,10 +145,14 @@ Commercial support is available at
 
 ## ETCD
 
+- https://sysdig.com/blog/monitor-etcd/
+
 ```bash
 etcdctl member list -w=table
 etcdctl endpoint status -w=table --cluster
 etcdctl endpoint health -w=table --cluster
+get / --prefix --keys-only
+curl --cacert /etc/kubernetes/pki/etcd/ca.pem --cert /etc/kubernetes/pki/etcd/etcd.pem --key /etc/kubernetes/pki/etcd/etcd-key.pem https://localhost:2379/metrics
 ```
 
 ```bash

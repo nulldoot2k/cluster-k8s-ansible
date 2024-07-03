@@ -1,0 +1,12 @@
+---
+- name: Kiểm tra sự tồn tại của tệp etcd.yaml.j2
+  stat:
+    path: "{{ playbook_dir }}/roles/etcd/templates/etcd.yml.j2"
+  register: etcd_template_file
+  delegate_to: localhost
+
+- name: Sao chép tệp etcd.yaml.j2 nếu tồn tại
+  template:
+    src: "../../etcd/templates/etcd.yml.j2"
+    dest: "/tmp/kubeadm-etcd.yml"
+  when: etcd_template_file.stat.exists
