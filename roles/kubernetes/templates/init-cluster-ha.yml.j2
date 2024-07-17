@@ -33,11 +33,12 @@ dns: {}
 etcd:
   external:
     endpoints:
-{% if lb.haproxy_vip %}
+  {% if lb.haproxy_vip %}
     - https://{{ hostvars[groups['vip'][0]]['ansible_host'] }}:2379
-{% else %}
+  {% else %}
     - https://{{ hostvars[groups['lb'][0]]['ansible_host'] }}:2379
-{% endif %}
+  {% endif %}
+
     caFile: "{{ kubernetes.kube_etcd_ca_dir }}/ca.pem"
     certFile: "{{ kubernetes.kube_etcd_ca_dir }}/etcd.pem"
     keyFile: "{{ kubernetes.kube_etcd_ca_dir }}/etcd-key.pem"
