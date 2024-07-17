@@ -17,11 +17,11 @@
 
 - name: Ensure Nginx
   tags: [nginx,haproxy,keepalived]
-  hosts: [ lb ] 
+  hosts: [ lb ]
   roles: [ loadbalancer ]
 
 - name: Ensure cfssl
-  hosts: [localhost:master]
+  hosts: [localhost:etcd]
   roles:
     - { role: cert-cfssl, tags: cfssl,gen-certs,sync-certs }
 
@@ -34,7 +34,7 @@
 - name: Deploy Cluster K8s
   hosts: [cluster]
   roles:
-    - { role: etcd, tags: etcd-in,etcd-out, when: "inventory_hostname in groups['master']" }
+    - { role: etcd, tags: etcd-in,etcd-out, when: "inventory_hostname in groups['etcd']" }
     - { role: kubernetes, tags: k8s,k8s-etcd,k8s-init,join-master,join-worker}
 
 - name: Setup Component
