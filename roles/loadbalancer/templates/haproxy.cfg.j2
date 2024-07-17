@@ -62,7 +62,7 @@ frontend front-etcd-proxy
 backend back-etcd-proxy
   mode tcp
   balance roundrobin
-  {% for item in groups['master'] %}
+  {% for item in groups['etcd'] %}
     server {{ item }} {{hostvars[item]["ansible_host"]}}:{{ lb.etcd_proxy_port }} check
   {% endfor %}
 
