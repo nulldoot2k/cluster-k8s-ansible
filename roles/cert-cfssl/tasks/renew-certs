@@ -56,13 +56,13 @@
 
 # Sync Certs
 - name: CFSSL - Move current directory to backup directory LB
-  shell: "mv {{ lb.lb_path_tmp }} {{ cfssl.cfssl_certs_bak }}"
+  shell: "rm -rf {{ cfssl.cfssl_certs_bak }}/etcd & mv {{ lb.lb_path_tmp }} {{ cfssl.cfssl_certs_bak }}"
   when: inventory_hostname in groups['lb'] and lb_dir_result.stat.exists
 - name: CFSSL - Move current directory to backup directory ETCD
-  shell: "mv {{ etcd.etcd_path_cert }} {{ cfssl.cfssl_certs_bak }}"
+  shell: "rm -rf {{ cfssl.cfssl_certs_bak }}/etcd & mv {{ etcd.etcd_path_cert }} {{ cfssl.cfssl_certs_bak }}"
   when: inventory_hostname in groups['etcd'] and etcd_dir_result.stat.exists
 - name: CFSSL - Move current directory to backup directory Master
-  shell: "mv {{ kubernetes.kube_etcd_ca_dir }} {{ cfssl.cfssl_certs_bak }}"
+  shell: "rm -rf {{ cfssl.cfssl_certs_bak }}/etcd & mv {{ kubernetes.kube_etcd_ca_dir }} {{ cfssl.cfssl_certs_bak }}"
   when: inventory_hostname in groups['master'] and master_dir_result.stat.exists
 
 - name: CFSSL - Copy ca-cert config files to lb
