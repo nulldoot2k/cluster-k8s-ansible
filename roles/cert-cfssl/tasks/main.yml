@@ -20,3 +20,12 @@
   when: 
     - "'sync-certs' in ansible_run_tags"
     - inventory_hostname != 'localhost'
+
+- include_tasks:
+    file: renew-certs.yml
+    apply:
+      tags: renew-certs
+  tags: renew-certs
+  when: 
+    - "'renew-certs' in ansible_run_tags"
+    - inventory_hostname != 'localhost'
