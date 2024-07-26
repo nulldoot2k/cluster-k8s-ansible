@@ -19,7 +19,7 @@ etcd:
           initial-cluster-state: new
           name: {{ inventory_hostname }}
           listen-peer-urls: https://{{ hostvars[inventory_hostname]['ansible_host'] }}:2380
-          listen-client-urls: https://{{ hostvars[inventory_hostname]['ansible_host'] }}:2379
+          listen-client-urls: https://127.0.0.1:2379,https://{{ hostvars[inventory_hostname]['ansible_host'] }}:2379
           advertise-client-urls: https://{{ hostvars[inventory_hostname]['ansible_host'] }}:2379
           initial-advertise-peer-urls: https://{{ hostvars[inventory_hostname]['ansible_host'] }}:2380
           trusted-ca-file: {{ etcd.etcd_path_cert }}/ca.pem
