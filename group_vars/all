@@ -5,7 +5,7 @@ ansible:
 
 lb:
   ansible_user_id_auth: ansible
-  haproxy_vip: true
+  active_ha_vip: false
   network_interface: 'ens33'
   virtual_ip: "{{ hostvars[groups['lb'][0]]['ansible_host'] }}"
   lb_path_enabled: "/etc/nginx/sites-enabled/"
@@ -27,7 +27,9 @@ containerd:
 kubernetes:
   name: kubernetes
   CERT_TOKEN: jrmvvf.6v58khgku1p14xd4
-  cluster_ha: true
+  active_cluster_ha: true
+  active_dis_ext: true
+  active_dis_int: false
   kubernetes_version: "1.28"
   version: "1.28.10-1.1"
   vs: "stable-1.28"
@@ -55,7 +57,7 @@ etcd:
   etcd_architecture: "amd64"
   etcd_download_dir: "/tmp"
   etcd_path_conf: "/etc/etcd"
-  etcd_path_lib: "/var/lib/etcd/"
+  etcd_path_lib: "/var/lib/etcd"
   etcd_path_cert: "/etc/kubernetes/pki/etcd"
   etcd_path_manifests: "/etc/kubernetes/manifests"
   etcd_path_data: "/var/lib/etcd/data"

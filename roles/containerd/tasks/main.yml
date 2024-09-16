@@ -10,6 +10,7 @@
     force_apt_get: true
   loop:
     - containerd.io
+    # - docker-ce
   when: "'{{ item }}' not in ansible_facts.packages"
 
 - name: Containerd - create containerd directory
@@ -22,6 +23,9 @@
 
 - name: Containerd - configuring the systemd cgroup driver for Containerd
   shell: sudo sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
+
+- name: Containerd - configuring the image driver for Containerd
+  shell: sudo sed -i 's/sandbox_image = "registry.k8s.io\/pause:3.8"/sandbox_image = "registry.k8s.io\/pause:3.9"/g' /etc/containerd/config.toml
   notify: 
     - restart containerd
     # - restart docker

@@ -31,9 +31,11 @@ listen stats
   stats auth {{ lb.ansible_user_id_auth }}:k8sHA
   stats admin if LOCALHOST
 
+{% if kubernetes.active_cluster_ha %}
 #############################
 #  api-proxy config
 #############################
+{% if 'master' in groups %}
 frontend front-api-proxy
   bind *:{{ lb.kube_proxy_port }}
   mode tcp
@@ -48,11 +50,14 @@ backend back-api-proxy
   {% for item in groups['master'] %}
     server {{ item }} {{hostvars[item]["ansible_host"]}}:{{ lb.kube_proxy_port }} check
   {% endfor %}
+{% endif %}
+{% endif %}
 
+{% if kubernetes.active_cluster_ha %}
 #############################
 #  etcd config
 #############################
-
+{% if 'etcd' in groups %}
 frontend front-etcd-proxy
   bind *:{{ lb.etcd_proxy_port }}
   mode tcp
@@ -62,10 +67,19 @@ frontend front-etcd-proxy
 backend back-etcd-proxy
   mode tcp
   balance roundrobin
+{% if kubernetes.active_dis_ext %}
   {% for item in groups['etcd'] %}
     server {{ item }} {{hostvars[item]["ansible_host"]}}:{{ lb.etcd_proxy_port }} check
   {% endfor %}
+{% else %}
+  {% for item in groups['master'] %}
+    server {{ item }} {{hostvars[item]["ansible_host"]}}:{{ lb.etcd_proxy_port }} check
+  {% endfor %}
+{% endif %}
+{% endif %}
+{% endif %}
 
+{% if kubernetes.active_cluster_ha %}
 # #############################
 # #  nodeport config
 # #############################
@@ -84,3 +98,4 @@ backend back-etcd-proxy
 #   {% for item in groups['master'] %}
 #     server {{ item }} {{hostvars[item]["ansible_host"]}}
 #   {% endfor %}
+{% endif %}

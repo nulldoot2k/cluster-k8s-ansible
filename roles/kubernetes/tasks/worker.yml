@@ -1,4 +1,5 @@
 ---
+# Gen Token add Members on Master Primary
 - name: Gen token hash and certs master
   block:
     - name: gen token hash
@@ -13,6 +14,7 @@
     token_output: "{{ hostvars[groups['master'][0]]['token_output']['stdout_lines'][-1] }}"
   when: inventory_hostname != groups['master'][0]
 
+# Add Workers
 - block:
   - name: Add worker node now
     shell: "{{ token_output }} >> {{ kubernetes.logs_nodes }}"

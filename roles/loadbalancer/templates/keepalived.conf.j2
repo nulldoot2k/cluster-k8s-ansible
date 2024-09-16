@@ -18,7 +18,7 @@ vrrp_instance vi_1 {
     priority {{ '102' if ansible_host == hostvars[groups['lb'][0]]['ansible_host'] else '100' }}
     interface {{ lb.network_interface }}
     unicast_src_ip {{ ansible_host }}
-{% if lb.haproxy_vip == true %}
+{% if lb.active_ha_vip == true %}
     unicast_peer {
   {% for host in groups['lb'][1:] %}
     {{ hostvars[host]['ansible_host'] }}

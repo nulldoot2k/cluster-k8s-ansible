@@ -26,7 +26,9 @@
     - { role: cert-cfssl, tags: cfssl,gen-certs,sync-certs }
 
 - name: Ensure common
-  hosts: [cluster:etcd]
+  hosts: ["{{ 'cluster:etcd' if kubernetes.active_cluster_ha and kubernetes.active_dis_ext else 'cluster' }}"]
+  vars_files:
+    - group_vars/all
   roles:
     - { role: common, tags: common }
     - { role: containerd, tags: containerd }

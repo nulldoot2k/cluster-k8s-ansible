@@ -3,7 +3,7 @@
   "hosts": [
     "localhost",
     "127.0.0.1",
-{% if lb.haproxy_vip %}
+{% if lb.active_ha_vip %}
     "{{ hostvars[groups['vip'][0]]['ansible_host'] }}",
     {% endif %}
     {%- for host in groups['lb'] -%}

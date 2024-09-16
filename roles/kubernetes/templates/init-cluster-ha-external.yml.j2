@@ -20,7 +20,7 @@ kind: ClusterConfiguration
 apiServer:
   timeoutForControlPlane: 4m0s
   certSANs:
-{% if lb.haproxy_vip %}
+{% if lb.active_ha_vip %}
     - "{{ hostvars[groups['vip'][0]]['ansible_host'] }}"
 {% else %}
     - "{{ hostvars[groups['lb'][0]]['ansible_host'] }}"
@@ -33,7 +33,7 @@ dns: {}
 etcd:
   external:
     endpoints:
-  {% if lb.haproxy_vip %}
+  {% if lb.active_ha_vip %}
     - https://{{ hostvars[groups['vip'][0]]['ansible_host'] }}:2379
   {% else %}
     - https://{{ hostvars[groups['lb'][0]]['ansible_host'] }}:2379
@@ -44,7 +44,7 @@ etcd:
     keyFile: "{{ kubernetes.kube_etcd_ca_dir }}/etcd-key.pem"
 imageRepository: registry.k8s.io
 kubernetesVersion: {{ kubernetes.vs }}
-{% if lb.haproxy_vip %}
+{% if lb.active_ha_vip %}
 controlPlaneEndpoint: "{{ hostvars[groups['vip'][0]]['ansible_host'] }}:6443"
 {% else %}
 controlPlaneEndpoint: "{{ hostvars[groups['lb'][0]]['ansible_host'] }}:6443"

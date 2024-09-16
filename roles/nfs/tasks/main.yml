@@ -4,7 +4,7 @@
   when: inventory_hostname in groups['nfs_server']
 
 - include_tasks: nfs-clients.yml
-  when: inventory_hostname in groups['worker']
+  when: inventory_hostname not in groups['nfs_server']
 
 - include_tasks: 
     file: storageclass.yml
