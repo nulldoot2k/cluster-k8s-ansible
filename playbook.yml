@@ -1,0 +1,65 @@
+---
+- name: Checking Host Information
+  hosts: ["{{ user_input if user_input != '' else 'all' }}"]
+  gather_facts: false
+  roles:
+    - { role: checking-hosts, tags: checking-hosts }
+  vars_prompt:
+    - name: user_input
+      prompt: "Enter the group name in hosts (or press Enter for 'all' to ignore)"
+      default: "{{ groups | join(',') }}"
+      private: false
+
+- name: Setup NFS
+  hosts: [ nfs ]
+  roles:
+    - { role: nfs, tags: nfs }
+
+- name: Ensure Nginx
+  tags: [nginx,haproxy,keepalived]
+  hosts: [ lb ] 
+  roles: [ loadbalancer ]
+
+- name: Ensure cfssl
+  hosts: [localhost:lb:etcd:master]
+  roles:
+    - { role: cert-cfssl, tags: cfssl,gen-certs,sync-certs }
+
+- name: Ensure common
+  hosts: ["{{ 'cluster:etcd' if kubernetes.active_cluster_ha and kubernetes.active_dis_ext else 'cluster' }}"]
+  vars_files:
+    - group_vars/all
+  roles:
+    - { role: common, tags: common }
+    - { role: containerd, tags: containerd }
+
+- name: Setup ETCD
+  hosts: [etcd:lb]
+  tags: [etcd-init,etcd-in,etcd-out]
+  roles: [ etcd ]
+
+- name: Deploy Cluster K8s
+  hosts: [cluster]
+  roles:
+    - { role: etcd, tags: etcd-in,etcd-out, when: "inventory_hostname in groups['etcd']" }
+    - { role: kubernetes, tags: k8s,k8s-init,join-master,join-worker}
+
+- name: Setup Component
+  hosts: ["master[0]"]
+  run_once: true
+  roles:
+    - { role: cni, tags: cni-flannel,cni-calico }
+    - { role: cert-manager, tags: cert }
+    - { role: metallb, tags: metallb }
+    - { role: ingress-nginx, tags: ingress }
+    - { role: nfs, tags: k8s-nfs }
+
+- name: Uninstall
+  tags:
+    - uninstall
+    - uninstall-kubernetes
+    - uninstall-containerd
+    - uninstall-nginx
+    - uninstall-common
+  hosts: [ all ]
+  roles: [ uninstall ]

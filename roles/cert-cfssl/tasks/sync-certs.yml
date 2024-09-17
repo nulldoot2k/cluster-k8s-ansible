@@ -1,0 +1,21 @@
+---
+- name: CFSSL - Copy ca-cert config files to lb
+  copy:
+    src: "{{ role_path }}/files/cert-updates/"
+    dest: "{{ lb.lb_path_tmp }}"
+    directory_mode: true
+  when: inventory_hostname in groups['lb']
+
+- name: CFSSL - Copy ca-cert config files to etcd
+  copy:
+    src: "{{ role_path }}/files/cert-updates/"
+    dest: "{{ etcd.etcd_path_cert }}"
+    directory_mode: true
+  when: inventory_hostname in groups['etcd']
+
+- name: CFSSL - Copy ca-cert config files to k8s
+  copy:
+    src: "{{ role_path }}/files/cert-updates/"
+    dest: "{{ kubernetes.kube_etcd_ca_dir }}"
+    directory_mode: true
+  when: inventory_hostname in groups['master']

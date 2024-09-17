@@ -1,0 +1,97 @@
+---
+# Gen token init cluster apply for instance distribute
+- block:
+  - name: Get kubeadm token
+    shell: "kubeadm token generate"
+    register: token_output
+
+  - name: Update token_output in variables all
+    replace:
+      path: "{{ role_path }}/../../group_vars/all"
+      regexp: '^(\\s+CERT_TOKEN:\\s+).*?$'
+      replace: '\\1{{ token_output.stdout }}'
+    become: false
+    delegate_to: localhost
+  when: 
+    - kubernetes.active_cluster_ha == true
+    - kubernetes.active_dis_ext == true
+    - kubernetes.active_dis_int == false
+
+# Create file config templates apply for distribute
+- name: Kubernetes Init - Create an {{kube_config_file}} empty configuring
+  copy:
+    content: ""
+    dest: "{{ kubernetes.kube_config_file }}"
+    force: no
+  when: kubernetes.active_cluster_ha == true
+
+# Copy file config templates apply for distribute 
+- name: Kubernetes Init - Copy init-kubetnetes-distribute-external config
+  template:
+    src: "init-cluster-ha-external.yml.j2"
+    dest: "{{ kubernetes.kube_config_file }}"
+  when: 
+    - kubernetes.active_dis_ext == true
+
+# Copy file config templates apply for standalone 
+- name: Kubernetes Init - Copy init-kubetnetes-standalone config
+  template:
+    src: "init-cluster.yml.j2"
+    dest: "{{ kubernetes.kube_config_file }}"
+  when: 
+    - kubernetes.active_cluster_ha == false
+
+##### Kubeadm Init #####
+# kubeadm init kubernetes instance distribute external
+- name: Kubernetes Init - Initialize the cluster (this could take some time)
+  shell: "kubeadm init --config {{ kubernetes.kube_config_file }} --upload-certs >> {{ kubernetes.logs_cluster }}"
+  args:
+    chdir: "$HOME/"
+    creates: "{{ kubernetes.logs_cluster }}"
+  when: 
+    - kubernetes.active_cluster_ha == true
+    - kubernetes.active_dis_ext == true
+    - kubernetes.active_dis_int == false
+
+# kubeadm init kubernetes instance distribute internal
+- name: Kubernetes Init - Init-cluster-distribute-internal
+  shell: kubeadm init --control-plane-endpoint="{{ hostvars[groups['lb'][0]]['ansible_host'] }}:6443" --upload-certs --apiserver-advertise-address="{{ hostvars[groups['master'][0]]['ansible_host'] }}" --pod-network-cidr="{{ kubernetes.CIDR }}" >> {{ kubernetes.logs_cluster }}
+  args:
+    chdir: "$HOME/"
+    creates: "{{ kubernetes.logs_cluster }}"
+  when: 
+    - kubernetes.active_cluster_ha == true
+    - kubernetes.active_dis_int == true
+    - kubernetes.active_dis_ext == false
+  
+# kubeadm init kubernetes instance standalone
+- name: Kubernetes Init - Initialize the cluster (this could take some time)
+  shell: "kubeadm init --config {{ kubernetes.kube_config_file }} --upload-certs >> {{ kubernetes.logs_cluster }}"
+  args:
+    chdir: "$HOME/"
+    creates: "{{ kubernetes.logs_cluster }}"
+  when: 
+    - kubernetes.active_cluster_ha == false
+##### END #####
+
+# export environment config remote client
+- name: Kubernetes Init - Create .kube directory
+  file:
+    path: "{{ kubernetes.config }}"
+    state: directory
+    mode: 0755
+
+- name: Check if config file exists
+  stat:
+    path: "{{ kubernetes.config }}/config"
+  register: config_file
+
+- name: Kubernetes Init - Copy admin.conf to user's kube config
+  copy:
+    src: "{{ kubernetes.kube_config_admin }}"
+    dest: "{{ kubernetes.config }}/config"
+    remote_src: yes
+  when: not config_file.stat.exists
+
+- name: Kubernetes Init - Chown permission config master
+  shell: "sudo chown $(id -u):$(id -g) $HOME/.kube/config"

@@ -1,0 +1,114 @@
+---
+# ETCD check certs file and folder
+- name: Check if etcd.yml exists
+  stat:
+    path: "{{ etcd.etcd_path_manifests }}/etcd.yaml"
+  register: etcd_yml_stat
+  when: inventory_hostname in groups['etcd']
+
+- name: Check if kube-... exists
+  stat:
+    path: "{{ kubernetes.kube_cert_manifests }}/{{ item }}"
+  register: kube_yml_stat
+  with_items:
+    - kube-apiserver.yaml
+    - kube-controller-manager.yaml
+    - kube-scheduler.yaml
+  when: inventory_hostname in groups['master']
+
+- name: CFSSL - Check if directory exists
+  stat:
+    path: "{{ lb.lb_path_tmp }}"
+  register: lb_dir_result
+  when: inventory_hostname in groups['lb']
+
+- name: CFSSL - Check if directory exists
+  stat:
+    path: "{{ etcd.etcd_path_cert }}"
+  register: etcd_dir_result
+  when: inventory_hostname in groups['etcd']
+
+- name: CFSSL - Check if directory exists
+  stat:
+    path: "{{ kubernetes.kube_etcd_ca_dir }}"
+  register: master_dir_result
+  when: inventory_hostname in groups['master']
+
+- name: CFSSL - Set fact for directory results
+  set_fact:
+    dir_result:
+      - lb_dir_result
+      - etcd_dir_result
+      - master_dir_result
+
+- name: CFSSL - Create backup directory
+  file:
+    path: "{{ cfssl.cfssl_certs_bak }}"
+    state: directory
+  when: dir_result
+
+# ETCD Stop service
+- name: CFSSL - Move file etcd.yml
+  shell: "mv {{ etcd.etcd_path_manifests }}/etcd.yaml {{ cfssl.cfssl_certs_bak }}"
+  when:
+    - inventory_hostname in groups['etcd']
+    - etcd_yml_stat.stat.exists
+
+# Sync Certs
+# remove certs old
+- name: CFSSL - Move current directory to backup directory LB
+  shell: "rm -rf {{ cfssl.cfssl_certs_bak }}/etcd & mv {{ lb.lb_path_tmp }} {{ cfssl.cfssl_certs_bak }}"
+  when: inventory_hostname in groups['lb'] and lb_dir_result.stat.exists
+- name: CFSSL - Move current directory to backup directory ETCD
+  shell: "rm -rf {{ cfssl.cfssl_certs_bak }}/etcd & mv {{ etcd.etcd_path_cert }} {{ cfssl.cfssl_certs_bak }}"
+  when: inventory_hostname in groups['etcd'] and etcd_dir_result.stat.exists
+- name: CFSSL - Move current directory to backup directory Master
+  shell: "rm -rf {{ cfssl.cfssl_certs_bak }}/etcd & mv {{ kubernetes.kube_etcd_ca_dir }} {{ cfssl.cfssl_certs_bak }}"
+  when: inventory_hostname in groups['master'] and master_dir_result.stat.exists
+
+# Copy certs new
+- name: CFSSL - Copy ca-cert config files to lb
+  copy:
+    src: "{{ role_path }}/files/cert-updates/"
+    dest: "{{ lb.lb_path_tmp }}"
+    directory_mode: true
+  when: inventory_hostname in groups['lb']
+- name: CFSSL - Copy ca-cert config files to etcd
+  copy:
+    src: "{{ role_path }}/files/cert-updates/"
+    dest: "{{ etcd.etcd_path_cert }}"
+    directory_mode: true
+  when: inventory_hostname in groups['etcd']
+- name: CFSSL - Copy ca-cert config files to k8s
+  copy:
+    src: "{{ role_path }}/files/cert-updates/"
+    dest: "{{ kubernetes.kube_etcd_ca_dir }}"
+    directory_mode: true
+  when: inventory_hostname in groups['master']
+
+# ETCD Start service: rollback certs etcd
+- name: CFSSL - Roll-Back file etcd.yml
+  shell: "mv {{ cfssl.cfssl_certs_bak }}/etcd.yaml {{ etcd.etcd_path_manifests }}/"
+  when: inventory_hostname in groups['etcd']
+
+# Renew renew certs kube-api
+- name: CFSSL - Renew API with kubeadm
+  shell: "kubeadm certs renew all"
+  when: inventory_hostname in groups['master']
+
+# Move, backup folder certs old
+- name: CFSSL - Move file kube-...
+  shell: "mv {{ item.stat.path }} {{ cfssl.cfssl_certs_bak }}"
+  with_items: "{{ kube_yml_stat.results }}"
+  when:
+    - inventory_hostname in groups['master']
+    - item.stat.exists
+
+# Kube API start service: rollback certs kube api
+- name: CFSSL - Roll-Back file kube-...
+  shell: "mv {{ cfssl.cfssl_certs_bak }}/{{ item }} {{ kubernetes.kube_cert_manifests }}"
+  with_items:
+    - kube-apiserver.yaml
+    - kube-controller-manager.yaml
+    - kube-scheduler.yaml
+  when: inventory_hostname in groups['master']

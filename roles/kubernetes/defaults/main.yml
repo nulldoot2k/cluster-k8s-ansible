@@ -1,0 +1,4 @@
+---
+# default
+master: "{{ kubernetes.master_node }}"
+etcd_proxy_port: "{{ hostvars[groups['lb'][0]]['ansible_host'] }}"

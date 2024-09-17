@@ -1,0 +1,7 @@
+---
+# defaults file for etcd
+initial_cluster: |
+      {% set comma = joiner(",") %}
+      {% for master in groups["etcd"] -%}
+          {{ comma() }}{{master}}=https://{{hostvars[master]["ansible_host"]}}:2380
+      {%- endfor %}

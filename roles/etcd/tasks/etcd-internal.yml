@@ -1,0 +1,41 @@
+---
+- name: ETCD - Install Kubernetes
+  apt:
+    name:
+      - "kubelet={{ kubernetes.version }}"
+      - "kubeadm={{ kubernetes.version }}"
+    update_cache: yes
+  notify: enable kubelet
+
+- name: ETCD - Hold version
+  shell: "sudo apt-mark hold kubelet kubeadm"
+
+- name: ETCD - Create dir empty
+  file:
+    path: "/usr/lib/systemd/system/kubelet.service.d"
+    state: directory
+
+- name: Create kubelet.conf file
+  template:
+    src: kubelet.conf.j2
+    dest: /usr/lib/systemd/system/kubelet.service.d/kubelet.conf
+
+- name: Create 20-etcd-service-manager.conf file
+  template:
+    src: 20-etcd-service-manager.conf.j2
+    dest: /usr/lib/systemd/system/kubelet.service.d/20-etcd-service-manager.conf
+
+- name: Reload systemd daemon
+  systemd:
+    daemon_reload: yes
+    state: restarted
+    name: kubelet.service
+
+- name: ETCD - Copy etcd.yaml config file
+  template:
+    src: etcd.yml.j2
+    dest: "{{ etcd.etcd_path_conf }}/etcd.yaml"
+
+- name: Run pod etcd
+  shell: |
+    kubeadm init phase etcd local --config={{ etcd.etcd_path_conf }}/etcd.yaml > etcd_init.log

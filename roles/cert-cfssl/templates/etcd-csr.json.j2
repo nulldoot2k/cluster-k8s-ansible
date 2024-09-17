@@ -1,0 +1,32 @@
+{
+  "CN": "etcd",
+  "hosts": [
+    "localhost",
+    "127.0.0.1",
+{% if lb.active_ha_vip %}
+    "{{ hostvars[groups['vip'][0]]['ansible_host'] }}",
+    {% endif %}
+    {%- for host in groups['lb'] -%}
+    "{{ hostvars[host]['ansible_host'] }}"{% if not loop.last %}, {% endif %}
+    {%- endfor -%},
+    {%- for host in groups['etcd'] -%}
+    "{{ hostvars[host]['ansible_host'] }}"{% if not loop.last %}, {% endif %}
+    {%- endfor -%},
+    {%- for host in groups['master'] -%}
+    "{{ hostvars[host]['ansible_host'] }}"{% if not loop.last %}, {% endif %}
+    {%- endfor -%}
+  ],
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "GB",
+      "L": "England",
+      "O": "Kubernetes",
+      "OU": "etcd",
+      "ST": "Cambridge"
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+---
+apiVersion: kubeadm.k8s.io/v1beta3
+kind: InitConfiguration
+bootstrapTokens:
+- groups:
+  - system:bootstrappers:kubeadm:default-node-token
+  token: {{ kubernetes.CERT_TOKEN }}
+  ttl: 24h0m0s
+  usages:
+  - signing
+  - authentication
+
+nodeRegistration:
+  criSocket: unix:///var/run/containerd/containerd.sock
+  imagePullPolicy: IfNotPresent
+  taints: null
+---
+apiVersion: kubeadm.k8s.io/v1beta3
+kind: ClusterConfiguration
+apiServer:
+  timeoutForControlPlane: 4m0s
+  certSANs:
+{% if lb.active_ha_vip %}
+    - "{{ hostvars[groups['vip'][0]]['ansible_host'] }}"
+{% else %}
+    - "{{ hostvars[groups['lb'][0]]['ansible_host'] }}"
+{% endif %}
+    - "127.0.0.1"
+certificatesDir: /etc/kubernetes/pki
+clusterName: kubernetes-lab
+controllerManager: {}
+dns: {}
+etcd:
+  external:
+    endpoints:
+  {% if lb.active_ha_vip %}
+    - https://{{ hostvars[groups['vip'][0]]['ansible_host'] }}:2379
+  {% else %}
+    - https://{{ hostvars[groups['lb'][0]]['ansible_host'] }}:2379
+  {% endif %}
+
+    caFile: "{{ kubernetes.kube_etcd_ca_dir }}/ca.pem"
+    certFile: "{{ kubernetes.kube_etcd_ca_dir }}/etcd.pem"
+    keyFile: "{{ kubernetes.kube_etcd_ca_dir }}/etcd-key.pem"
+imageRepository: registry.k8s.io
+kubernetesVersion: {{ kubernetes.vs }}
+{% if lb.active_ha_vip %}
+controlPlaneEndpoint: "{{ hostvars[groups['vip'][0]]['ansible_host'] }}:6443"
+{% else %}
+controlPlaneEndpoint: "{{ hostvars[groups['lb'][0]]['ansible_host'] }}:6443"
+{% endif %}
+networking:
+  dnsDomain: cluster.local
+  serviceSubnet: "{{ kubernetes.CIDR }}"
+scheduler: {}

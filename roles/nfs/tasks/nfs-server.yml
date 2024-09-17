@@ -1,0 +1,86 @@
+---
+- name: Server - Updates package lists 
+  apt:
+    update_cache: true
+    force_apt_get: true
+
+- name: Server - Install NFS Server
+  apt:
+    pkg: nfs-kernel-server
+    force_apt_get: true
+
+- name: Server - Ensure exported directory exists
+  file:
+    path: "{{ nfs.nfs_export }}"
+    state: directory
+    mode: '0777'
+    owner: nobody
+    group: nogroup
+
+- block:
+  - name: Server - Create filesystem on disk
+    filesystem:
+      fstype: "{{ nfs.nfs_fstype }}"
+      dev: "{{ nfs.nfs_disk_location }}"
+      resizefs: true
+  - name: Server - Mount filesystem
+    mount:
+      path: "{{ nfs.nfs_export }}"
+      src: "{{ nfs.nfs_disk_location }}"
+      fstype: "{{ nfs.nfs_fstype }}"
+      state: mounted
+  - name: Server - Grow filesystem after mounting (xfs requires to be mounted)
+    filesystem:
+      fstype: "{{ nfs.nfs_fstype }}"
+      dev: "{{ nfs.nfs_disk_location }}"
+      resizefs: true
+  when: nfs.nfs_disk_location is not none
+
+- name: Server - Update exports file
+  lineinfile:
+    path: /etc/exports
+    regexp: "{{ nfs.nfs_export }}"
+    line: "{{ nfs.nfs_export }} {{ nfs.nfs_export_subnet }}({{ nfs.nfs_export_options }})"
+  notify: re-export filesystem
+
+- name: Server - Restart nfs-kernel-server service
+  systemd:
+    name: nfs-kernel-server
+    state: started
+    daemon_reload: yes
+
+- name: Server - Re-export the share
+  command: exportfs -rav
+
+- name: Server - Check if NFS access rules exist
+  iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: nfs
+    source: "{{ item }}"
+    jump: ACCEPT
+    state: absent
+  register: iptables_check
+  loop: "{{ nfs_storage.whitelist_ips }}"
+
+- name: Server - Allow NFS access for specific IP range
+  iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: nfs
+    source: "{{ item }}"
+    jump: ACCEPT
+    comment: Accept new NFS connections.
+    state: present
+  loop: "{{ nfs_storage.whitelist_ips }}"
+  when: iptables_check.changed == false
+
+- name: Server - Drop NFS access for all other IP addresses
+  iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: nfs
+    jump: DROP
+
+- name: Server - Flush handlers
+  meta: flush_handlers

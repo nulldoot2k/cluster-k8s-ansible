@@ -1,0 +1,13 @@
+---
+# handlers file for sync-etcd-certs
+- name: Reload systemd
+  service:
+    name: etcd
+    enabled: yes
+    daemon_reload: yes
+    state: restarted
+
+- name: enable kubelet
+  service:
+    name: kubelet
+    enabled: yes

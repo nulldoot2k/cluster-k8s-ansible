@@ -1,0 +1,31 @@
+---
+# tasks file for etcd
+- name: ETCD - Copy etcd.env config file
+  template:
+    src: etcd.env.j2
+    dest: "{{ etcd.etcd_path_conf }}/etcd.env"
+
+- name: ETCD - Check if necessary files certs exist
+  stat:
+    path: "{{ etcd.etcd_path_cert }}/{{ item }}"
+  register: file_status
+  with_items:
+    - "ca.pem"
+    - "etcd-key.pem"
+    - "etcd.pem"
+  ignore_errors: true
+
+- name: ETCD - Copy etcd config file systemd
+  template:
+    src: etcd.service.j2
+    dest: "{{ etcd.etcd_path_systemd }}/etcd.service"
+  notify:
+    - Reload systemd
+
+- name: Start systemd
+  service:
+    name: etcd
+    enabled: yes
+    daemon_reload: yes
+    state: started
+  when: file_status.results | map(attribute='stat.exists') | map('bool') | sum == 3

@@ -1,0 +1,16 @@
+---
+# NFS - Volumes
+- include_tasks: nfs-server.yml
+  when: inventory_hostname in groups['nfs_server']
+
+- include_tasks: nfs-clients.yml
+  when: inventory_hostname not in groups['nfs_server']
+
+- include_tasks: 
+    file: storageclass.yml
+    apply:
+      tags: k8s-nfs
+  tags: k8s-nfs
+  when:
+    - inventory_hostname in groups['master']
+    - "'k8s-nfs' in ansible_run_tags"

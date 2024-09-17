@@ -1,0 +1,32 @@
+---
+apiVersion: "kubeadm.k8s.io/v1beta3"
+kind: InitConfiguration
+nodeRegistration:
+    name: {{ inventory_hostname }}
+localAPIEndpoint:
+    advertiseAddress: {{ hostvars[inventory_hostname]['ansible_host'] }}
+---
+apiVersion: "kubeadm.k8s.io/v1beta3"
+kind: ClusterConfiguration
+etcd:
+  local:
+      serverCertSANs:
+      - "{{ hostvars[inventory_hostname]['ansible_host'] }}"
+      peerCertSANs:
+      - "{{ hostvars[inventory_hostname]['ansible_host'] }}"
+      extraArgs:
+          initial-cluster: {{ initial_cluster }}
+          initial-cluster-state: new
+          name: {{ inventory_hostname }}
+          data-dir: {{ etcd.etcd_path_lib }}
+          listen-peer-urls: https://{{ hostvars[inventory_hostname]['ansible_host'] }}:2380
+          listen-client-urls: https://127.0.0.1:2379,https://{{ hostvars[inventory_hostname]['ansible_host'] }}:2379
+          advertise-client-urls: https://{{ hostvars[inventory_hostname]['ansible_host'] }}:2379
+          initial-advertise-peer-urls: https://{{ hostvars[inventory_hostname]['ansible_host'] }}:2380
+          initial-cluster-token: etcd-cluster
+          trusted-ca-file: {{ etcd.etcd_path_cert }}/ca.pem
+          cert-file: {{ etcd.etcd_path_cert }}/etcd.pem
+          key-file: {{ etcd.etcd_path_cert }}/etcd-key.pem
+          peer-cert-file: {{ etcd.etcd_path_cert }}/etcd.pem
+          peer-key-file: {{ etcd.etcd_path_cert }}/etcd-key.pem
+          peer-trusted-ca-file: {{ etcd.etcd_path_cert }}/ca.pem

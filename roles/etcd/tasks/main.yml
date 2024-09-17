@@ -1,0 +1,26 @@
+---
+- include_tasks:
+    file: etcd-init.yml
+    apply:
+      tags: etcd-init
+  tags: etcd-init
+  when: 
+    - "'etcd-init' in ansible_run_tags"
+
+- include_tasks:
+    file: etcd-internal.yml
+    apply:
+      tags: etcd-in
+  tags: etcd-in
+  when: 
+    - "'etcd-in' in ansible_run_tags"
+    - inventory_hostname in groups['etcd']
+
+- include_tasks:
+    file: etcd-external.yml
+    apply:
+      tags: etcd-out
+  tags: etcd-out
+  when: 
+    - "'etcd-out' in ansible_run_tags"
+    - inventory_hostname in groups['etcd']

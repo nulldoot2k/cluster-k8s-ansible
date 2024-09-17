@@ -1,0 +1,55 @@
+---
+# Gen Token add Members on Master Primary
+- name: Gen token hash and certs master
+  when: 
+    - inventory_hostname == groups['master'][0]
+  block:
+    - name: Gen hash token
+      shell: kubeadm token create --print-join-command
+      environment:
+          KUBECONFIG: "{{ kubernetes.kube_config_admin }}"
+      register: token_output
+    - name: Get CA Certs internal
+      shell: "kubeadm init phase upload-certs --upload-certs"
+      register: cert_output_internal
+      environment:
+        KUBECONFIG: "{{ kubernetes.kube_config_admin }}"
+      when: kubernetes.active_dis_int == true
+    - name: Get CA Certs external
+      shell: "kubeadm init phase upload-certs --upload-certs --config {{ kubernetes.kube_config_file }}"
+      register: cert_output_external
+      environment:
+        KUBECONFIG: "{{ kubernetes.kube_config_admin }}"
+      when: kubernetes.active_dis_ext == true
+
+- name: Set fact env
+  set_fact:
+    token_output: "{{ hostvars[groups['master'][0]]['token_output']['stdout_lines'][-1] }}"
+    cert_output: "{{ hostvars[groups['master'][0]]['cert_output_internal']['stdout_lines'][-1] if kubernetes.active_dis_int else hostvars[groups['master'][0]]['cert_output_external']['stdout_lines'][-1] }}"
+  when: inventory_hostname != groups['master'][0]
+
+# Add Master
+- block:
+  - name: Add master node now
+    shell: "{{ token_output }} --control-plane --certificate-key {{ cert_output }} >> {{ kubernetes.logs_cluster }}"
+    args:
+      chdir: $HOME
+      creates: "{{ kubernetes.logs_cluster }}"
+  - name: Kubernetes Init - Create .kube directory
+    file:
+      path: "{{ kubernetes.config }}"
+      state: directory
+      mode: 0755
+  - name: Check if config file exists
+    stat:
+      path: "{{ kubernetes.config }}/config"
+    register: config_file
+  - name: Kubernetes Init - Copy admin.conf to user's kube config
+    copy:
+      src: "{{ kubernetes.kube_config_admin }}"
+      dest: "{{ kubernetes.config }}/config"
+      remote_src: yes
+    when: not config_file.stat.exists
+  - name: Kubernetes Init - Chown permission config slave
+    shell: "sudo chown $(id -u):$(id -g) $HOME/.kube/config"
+  when: inventory_hostname != groups['master'][0]

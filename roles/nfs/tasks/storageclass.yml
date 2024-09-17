@@ -1,0 +1,38 @@
+---
+- name: "Kubernetes - Check if {{ nfs.nfs_path_tmp }} directory exists"
+  stat:
+    path: "{{ nfs.nfs_path_tmp }}"
+  register: nfs_directory
+
+- name: "Kubernetes - Create {{ nfs.nfs_path_tmp }} directory"
+  file:
+    path: "{{ nfs.nfs_path_tmp }}"
+    state: directory
+    mode: '0755'
+  become: true
+  when: nfs_directory.stat.exists == false
+
+- name: Kubernetes - Template copy files
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  with_items:
+    - { src: 'templates/sa.yaml.j2', dest: '/tmp/nfs/000-sa.yaml' }
+    - { src: 'templates/sc.yaml.j2', dest: '/tmp/nfs/001-sc.yaml' }
+    - { src: 'templates/rbac.yaml.j2', dest: '/tmp/nfs/002-rbac.yaml' }
+    - { src: 'templates/deploy.yaml.j2', dest: '/tmp/nfs/003-deploy.yaml' }
+
+- name: Kubernetes - Check if storageclass exists
+  command: kubectl get storageclass {{ nfs_storage.storageclass_name }}
+  register: storageclass_check
+  changed_when: false
+  failed_when: false
+
+- name: Kubernetes - Apply storageclass configurations
+  shell: kubectl apply -f "{{ nfs.nfs_path_tmp }}"
+  environment:
+      KUBECONFIG: "{{ kubernetes.kube_config_admin }}"
+  args:
+    executable: /bin/bash
+  become: true
+  when: storageclass_check.rc != 0
