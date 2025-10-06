@@ -27,7 +27,7 @@ containerd:
 kubernetes:
   name: kubernetes
   CERT_TOKEN: jrmvvf.6v58khgku1p14xd4
-  active_cluster_ha: true
+  active_cluster_ha: false
   active_dis_ext: true
   active_dis_int: false
   kubernetes_version: "1.28"

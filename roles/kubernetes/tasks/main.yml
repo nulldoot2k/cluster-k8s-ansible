@@ -19,6 +19,7 @@
   when: 
     - inventory_hostname in groups['master']
     - "'join-master' in ansible_run_tags"
+    - kubernetes.active_cluster_ha == true
 
 - include_tasks: 
     file: worker.yml

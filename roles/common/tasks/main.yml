@@ -13,7 +13,7 @@
     name: "{{ item }}"
     state: latest
     update_cache: yes
-  loop: 
+  loop:
     - apt-transport-https
     - ca-certificates
     - curl
@@ -21,7 +21,8 @@
     - software-properties-common
     - apt-utils
     - lsb-release
-  when: "'{{ item }}' not in ansible_facts.packages"
+  when: item not in ansible_facts.packages.keys() | default([])
+  ignore_errors: true
 
 # sys container
 - name: Common - Disable system SWAP
@@ -43,8 +44,8 @@
   blockinfile:
     path: "{{ containerd.container_module_conf }}"
     block: |
-         overlay
-         br_netfilter
+      overlay
+      br_netfilter
 # end
 
 # sys kubernetes
@@ -63,33 +64,55 @@
     - 'net.ipv4.ip_forward                 = 1'
     - 'net.bridge.bridge-nf-call-ip6tables = 1'
 
+- name: Common - Apply sysctl settings
+  shell: sysctl -p {{ kubernetes.kube_sysctl_conf }}
+  args:
+    executable: /bin/bash
+  ignore_errors: true
+
 - name: Common - Fix [ERROR] FileContent iptables
   shell: |
     modprobe br_netfilter
     echo 1 > /proc/sys/net/bridge/bridge-nf-call-iptables
     echo 1 > /proc/sys/net/ipv4/ip_forward
+  args:
+    executable: /bin/bash
+  ignore_errors: true
+
+- name: Common - Load Containerd modules
+  shell: modprobe {{ item }}
+  args:
+    executable: /bin/bash
+  loop:
+    - overlay
+    - br_netfilter
+  ignore_errors: true
 
 - name: Common - Check br_netfilter module
   shell: lsmod | grep br_netfilter
   register: br_netfilter_output
+  become: true
   ignore_errors: true
 
 - name: Common - Check overlay module
   shell: lsmod | grep overlay
   register: overlay_output
+  become: true
   ignore_errors: true
 
 - name: Common - Check sysctl settings
   shell: sysctl net.bridge.bridge-nf-call-iptables net.bridge.bridge-nf-call-ip6tables net.ipv4.ip_forward
   register: sysctl_output
+  become: true
   ignore_errors: true
 
 - name: Common - Display output
   debug:
-    var:
-      br_netfilter_output.stdout_lines
-      overlay_output.stdout_lines
-      sysctl_output.stdout_lines
+    var: item
+  loop:
+    - br_netfilter_output.stdout_lines
+    - overlay_output.stdout_lines
+    - sysctl_output.stdout_lines
   ignore_errors: true
 # end
 
@@ -103,10 +126,17 @@
     state: present
 
 # fix DEPRECATION section in apt-key
+- name: Check if /etc/apt/trusted.gpg exists
+  stat:
+    path: /etc/apt/trusted.gpg
+  register: trusted_gpg_file
+
 - name: Common - Copy trusted.gpg
   copy:
     src: /etc/apt/trusted.gpg
     dest: /etc/apt/trusted.gpg.d
+    remote_src: yes
+  when: trusted_gpg_file.stat.exists
 
 - name: Common - add Docker's APT repository
   apt_repository:

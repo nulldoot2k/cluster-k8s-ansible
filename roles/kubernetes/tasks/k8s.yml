@@ -6,6 +6,7 @@
       - "kubeadm={{ kubernetes.version }}"
       - "kubectl={{ kubernetes.version }}"
     update_cache: yes
+    allow_downgrade: yes
   notify: enable kubelet
 
 - name: Kubernetes - Hold version

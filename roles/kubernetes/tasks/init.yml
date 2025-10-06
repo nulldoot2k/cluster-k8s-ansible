@@ -14,11 +14,11 @@
     delegate_to: localhost
   when: 
     - kubernetes.active_cluster_ha == true
-    - kubernetes.active_dis_ext == true
-    - kubernetes.active_dis_int == false
+    - kubernetes.active_dis_ext | default(false) == true
+    - kubernetes.active_dis_int | default(false) == false
 
 # Create file config templates apply for distribute
-- name: Kubernetes Init - Create an {{kube_config_file}} empty configuring
+- name: Kubernetes Init - Create an {{kubernetes.kube_config_file}} empty configuring
   copy:
     content: ""
     dest: "{{ kubernetes.kube_config_file }}"
@@ -32,6 +32,7 @@
     dest: "{{ kubernetes.kube_config_file }}"
   when: 
     - kubernetes.active_dis_ext == true
+    - kubernetes.active_cluster_ha == true
 
 # Copy file config templates apply for standalone 
 - name: Kubernetes Init - Copy init-kubetnetes-standalone config
@@ -61,8 +62,8 @@
     creates: "{{ kubernetes.logs_cluster }}"
   when: 
     - kubernetes.active_cluster_ha == true
-    - kubernetes.active_dis_int == true
     - kubernetes.active_dis_ext == false
+    - kubernetes.active_dis_int == true
   
 # kubeadm init kubernetes instance standalone
 - name: Kubernetes Init - Initialize the cluster (this could take some time)
@@ -91,7 +92,11 @@
     src: "{{ kubernetes.kube_config_admin }}"
     dest: "{{ kubernetes.config }}/config"
     remote_src: yes
-  when: not config_file.stat.exists
+    force: yes
+  become: true
+  when: config_file.stat.exists
 
 - name: Kubernetes Init - Chown permission config master
   shell: "sudo chown $(id -u):$(id -g) $HOME/.kube/config"
+  args:
+    executable: /bin/bash
