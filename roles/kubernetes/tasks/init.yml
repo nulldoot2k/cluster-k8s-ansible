@@ -100,3 +100,10 @@
   shell: "sudo chown $(id -u):$(id -g) $HOME/.kube/config"
   args:
     executable: /bin/bash
+
+- name: Kubernetes Init - Fetch kubeconfig from master node to local
+  run_once: true
+  fetch:
+    src: "{{ kubernetes.config }}/config"
+    dest: "{{ playbook_dir }}/files/{{ inventory_hostname }}.conf"
+    flat: yes
