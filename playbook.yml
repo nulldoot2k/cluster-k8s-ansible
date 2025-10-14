@@ -56,10 +56,10 @@
 
 - name: Uninstall
   tags:
-    - uninstall
+    - uninstall-nfs
     - uninstall-kubernetes
     - uninstall-containerd
-    - uninstall-nginx
+    - uninstall-lb
     - uninstall-common
   hosts: [ all ]
   roles: [ uninstall ]
