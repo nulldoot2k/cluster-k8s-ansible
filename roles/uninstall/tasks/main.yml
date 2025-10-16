@@ -43,3 +43,12 @@
   when:
     - "'uninstall-nfs' in ansible_run_tags"
     - inventory_hostname in groups['nfs']
+
+- include_tasks: 
+    file: uninstall-velero.yml
+    apply:
+      tags: uninstall-velero
+  tags: uninstall-velero
+  when:
+    - "'uninstall-velero' in ansible_run_tags"
+    - inventory_hostname in groups['master'][0]

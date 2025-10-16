@@ -1,0 +1,150 @@
+---
+# ==========================================
+# Run on localhost (Ansible control machine)
+# ==========================================
+- name: Velero - Create local files directory
+  file:
+    path: "{{ playbook_dir }}/files/velero"
+    state: directory
+    mode: 0755
+  delegate_to: localhost
+  run_once: true
+
+- name: Velero - Check if velero binary exists locally
+  stat:
+    path: "{{ velero.velero_path_bin }}/velero"
+  register: velero_local_binary
+  delegate_to: localhost
+  run_once: true
+
+- name: Velero - Download velero to local
+  get_url:
+    url: "{{ velero.velero_repo_url }}"
+    dest: "{{ playbook_dir }}/files/velero/velero.tar.gz"
+    mode: 0644
+    timeout: 300
+  delegate_to: localhost
+  run_once: true
+  when: not velero_local_binary.stat.exists
+
+- name: Velero - Extract velero on local
+  unarchive:
+    src: "{{ playbook_dir }}/files/velero/velero.tar.gz"
+    dest: "{{ playbook_dir }}/files/velero/"
+  delegate_to: localhost
+  run_once: true
+  when: not velero_local_binary.stat.exists
+
+- name: Velero - Copy velero binary to files directory
+  copy:
+    src: "{{ playbook_dir }}/files/velero/velero-{{ velero.velero_version }}-linux-amd64/velero"
+    dest: "{{ velero.velero_path_bin }}/velero"
+    mode: 0755
+  delegate_to: localhost
+  run_once: true
+  when: not velero_local_binary.stat.exists
+
+- name: Velero - Verify velero installation locally
+  command: "{{ velero.velero_path_bin }}/velero version --client-only"
+  register: velero_version_output
+  changed_when: false
+  delegate_to: localhost
+  run_once: true
+
+- name: Velero - Display velero version
+  debug:
+    var: velero_version_output.stdout_lines
+  run_once: true
+
+# Fetch on Master
+- name: Velero - Fetch kubeconfig from master node to local
+  run_once: true
+  fetch:
+    src: "{{ kubernetes.config }}/config"
+    dest: "{{ playbook_dir }}/files/{{ inventory_hostname }}.conf"
+    flat: yes
+
+- name: "Velero - Check if velero namespace exists"
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Namespace
+    name: "{{ velero.velero_namespace }}"
+    kubeconfig: "{{ playbook_dir }}/files/{{ inventory_hostname }}.conf"
+  register: namespace_check
+  delegate_to: localhost
+  run_once: true
+  ignore_errors: true
+
+- name: "Velero - Create velero namespace if it does not exist"
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Namespace
+    name: "{{ velero.velero_namespace }}"
+    state: present
+    kubeconfig: "{{ playbook_dir }}/files/{{ inventory_hostname }}.conf"
+  when: namespace_check.resources | length == 0
+  delegate_to: localhost
+  run_once: true
+
+- name: Velero - Create credentials config locally
+  template:
+    src: "credentials.j2"
+    dest: "{{ playbook_dir }}/files/velero/.credentials"
+    mode: 0644
+  delegate_to: localhost
+
+- name: "Velero - Applies the velero"
+  shell: |
+    {{ velero.velero_path_bin }}/velero install \
+      --provider aws \
+      --plugins velero/{{ velero.velero_plugin_version }} \
+      --namespace {{ velero.velero_namespace }} \
+      --bucket {{ minio.minio_bucket_name }} \
+      --secret-file {{ playbook_dir }}/files/velero/.credentials \
+      --use-volume-snapshots=false \
+      --backup-location-config region={{ minio.minio_region_name }},s3ForcePathStyle="true",s3Url=http://{{ hostvars[groups['minio'][0]]['ansible_host'] }}:9000 \
+      --use-node-agent > velero.log
+  environment:
+    KUBECONFIG: "{{ playbook_dir }}/files/{{ inventory_hostname }}.conf"
+  delegate_to: localhost
+  register: velero_output
+  run_once: true
+
+- name: Velero - Allow traffic from target IPs on port 9000
+  iptables:
+    chain: INPUT
+    protocol: tcp
+    source: "{{ item }}"
+    destination_port: 9000
+    jump: ACCEPT
+    rule_num: "{{ item_index + 1 }}"
+  become: true
+  delegate_to: "{{ groups['minio'][0] }}"
+  loop: "{{ velero.velero_target_ip }}"
+  loop_control:
+    loop_var: item
+    index_var: item_index
+
+- name: Velero - Drop all traffic on port 9000
+  iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: 9000
+    jump: DROP
+    state: present
+  delegate_to: "{{ groups['minio'][0] }}"
+  become: true
+
+# ==========================================
+# Cleanup
+# ==========================================
+# - name: Velero - Cleanup temporary files
+#   file:
+#     path: "{{ item }}"
+#     state: absent
+#   loop:
+#     - "{{ velero.velero_path_bin }}/velero"
+#     - "{{ playbook_dir }}/files/velero"
+#   delegate_to: localhost
+#   run_once: true
+#   become: true

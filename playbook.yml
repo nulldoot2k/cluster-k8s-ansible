@@ -53,6 +53,13 @@
     - { role: metallb, tags: metallb }
     - { role: ingress-nginx, tags: ingress }
     - { role: nfs, tags: k8s-nfs }
+    - { role: velero, tags: velero }
+
+# Install Minio
+- name: Setup Minio
+  tags: [ minio ]
+  hosts: [ minio ]
+  roles: [ minio ]
 
 - name: Uninstall
   tags:
