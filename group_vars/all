@@ -88,6 +88,17 @@ ingress_nginx:
   version: "v1.9.4"
   provider: "baremetal"
 
+minio:
+  minio_image: "minio/minio"
+  minio_image_bucket: "minio/mc"
+  minio_region_name: "vietnam"
+  minio_bucket_name: "bucket"
+  minio_root_user: "admin"
+  minio_root_passwd: "password"
+  minio_access_key: "username"
+  minio_secret_key: "password"
+  minio_path_opt: "/opt/minio"
+
 nfs:
   nfs_fstype: "ext4"
   nfs_export_subnet: "*"

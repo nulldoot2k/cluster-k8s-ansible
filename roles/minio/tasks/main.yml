@@ -1,0 +1,43 @@
+---
+- name: Minio - Ensure Docker is installed
+  apt:
+    name:
+      - docker.io
+      - docker-compose
+    state: present
+    update_cache: yes
+
+- name: Minio - Create MinIO directory
+  file:
+    path: "{{ minio.minio_path_opt }}"
+    state: directory
+    mode: 0755
+
+- name: Minio - Copy template yaml
+  template:
+    src: "{{ item }}"
+    dest: "{{ minio.minio_path_opt }}/{{ item | basename | regex_replace('\\.j2$', '') }}"
+    mode: 0644
+  loop:
+    - docker-compose.yml.j2
+    - policy-filestorage.json.j2
+
+- name: Minio - Pull MinIO image
+  command: docker compose -f {{ minio.minio_path_opt }}/docker-compose.yml pull
+  args:
+    chdir: "{{ minio.minio_path_opt }}"
+
+- name: Minio - Start MinIO service
+  command: docker compose -f /opt/minio/docker-compose.yml up -d
+  args:
+    chdir: "{{ minio.minio_path_opt }}"
+
+- name: Minio - Wait for MinIO to start
+  uri:
+    url: http://localhost:9000/minio/health/ready
+    method: GET
+    status_code: 200
+  register: minio_health
+  retries: 10
+  delay: 5
+  until: minio_health.status == 200

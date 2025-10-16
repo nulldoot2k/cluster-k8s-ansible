@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    restart: always
+    environment:
+      MINIO_ROOT_USER: {{ minio.minio_root_user }}
+      MINIO_ROOT_PASSWORD: {{ minio.minio_root_passwd }}
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9000/minio/health/live || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 40s
+    networks:
+      - minio_network
+
+  minio-bucket:
+    image: minio/mc:latest
+    container_name: minio_bucket
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      - MINIO_ENDPOINT=http://minio:9000
+      - MINIO_ACCESS_KEY={{ minio.minio_root_user }}
+      - MINIO_SECRET_KEY={{ minio.minio_root_passwd }}
+      - MINIO_REGION_NAME={{ minio.minio_region_name }}
+      - MINIO_SITE_REGION={{ minio.minio_region_name }}
+    volumes:
+      - ./policy-filestorage.json:/opt/policy-filestorage.json:ro
+    entrypoint: >
+      /bin/sh -c "
+      echo '>> Waiting for MinIO to be ready...';
+      until /usr/bin/mc alias set myminio http://minio:9000 {{ minio.minio_root_user }} {{ minio.minio_root_passwd }} 2>/dev/null; do
+        echo '>> MinIO not ready yet, retrying in 5s...';
+        sleep 5;
+      done;
+      echo '>> MinIO is ready!';
+
+      echo '>> Creating bucket: {{ minio.minio_bucket_name }}';
+      /usr/bin/mc mb -p myminio/{{ minio.minio_bucket_name }} --region={{minio.minio_region_name }} || true;
+
+      echo '>> Creating service user...';
+      /usr/bin/mc admin user add myminio {{ minio.minio_access_key }} {{ minio.minio_secret_key }} || true;
+
+      echo '>> Creating custom policy...';
+      /usr/bin/mc admin policy create myminio file-storage-policy /opt/policy-filestorage.json || true;
+
+      echo '>> Attaching policy to user...';
+      /usr/bin/mc admin policy attach myminio file-storage-policy --user={{ minio.minio_access_key }};
+
+      echo '>> Verification...';
+      /usr/bin/mc ls myminio;
+
+      echo '>> Setup completed!';
+      exit 0;
+      "
+    networks:
+      - minio_network
+
+networks:
+  minio_network:
+    driver: bridge
+
+volumes:
+  minio_data:
