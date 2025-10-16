@@ -2,3 +2,5 @@ ansible-core
 ansible>=2.15.0
 pywinrm>=0.4.3
 pyvmomi>=8.0.0
+openshift
+kubernetes

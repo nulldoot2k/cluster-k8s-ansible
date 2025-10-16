@@ -1,0 +1,105 @@
+---
+# ==========================================
+# Run on localhost (Ansible control machine)
+# ==========================================
+- name: Velero - Create local files directory
+  file:
+    path: "{{ playbook_dir }}/files/velero"
+    state: directory
+    mode: 0755
+  delegate_to: localhost
+  run_once: true
+
+- name: Velero - Check if velero binary exists locally
+  stat:
+    path: "{{ velero.velero_path_bin }}/velero"
+  register: velero_local_binary
+  delegate_to: localhost
+  run_once: true
+
+- name: Velero - Download velero to local
+  get_url:
+    url: "{{ velero.velero_repo_url }}"
+    dest: "{{ playbook_dir }}/files/velero/velero.tar.gz"
+    mode: 0644
+    timeout: 300
+  delegate_to: localhost
+  run_once: true
+  when: not velero_local_binary.stat.exists
+
+- name: Velero - Extract velero on local
+  unarchive:
+    src: "{{ playbook_dir }}/files/velero/velero.tar.gz"
+    dest: "{{ playbook_dir }}/files/velero/"
+  delegate_to: localhost
+  run_once: true
+  when: not velero_local_binary.stat.exists
+
+- name: Velero - Copy velero binary to files directory
+  copy:
+    src: "{{ playbook_dir }}/files/velero/velero-{{ velero.velero_version }}-linux-amd64/velero"
+    dest: "{{ velero.velero_path_bin }}/velero"
+    mode: 0755
+  delegate_to: localhost
+  run_once: true
+  when: not velero_local_binary.stat.exists
+
+# Fetch on Master
+- name: Velero - Fetch kubeconfig from master node to local
+  run_once: true
+  fetch:
+    src: "{{ kubernetes.config }}/config"
+    dest: "{{ playbook_dir }}/files/{{ inventory_hostname }}.conf"
+    flat: yes
+
+- name: "Run velero uninstall command with expect"
+  shell: "{{ velero.velero_path_bin }}/velero uninstall --namespace {{ velero.velero_namespace }}"
+  environment:
+    KUBECONFIG: "{{ playbook_dir }}/files/{{ inventory_hostname }}.conf"
+  delegate_to: localhost
+  register: uninstall_output
+  ignore_errors: true
+  changed_when: false
+
+- name: "Delete Velero namespace and clusterrolebinding"
+  kubernetes.core.k8s:
+    state: absent
+    api_version: v1
+    kind: Namespace
+    name: "{{ velero.velero_namespace }}"
+  environment:
+    KUBECONFIG: "{{ playbook_dir }}/files/{{ inventory_hostname }}.conf"
+  delegate_to: localhost
+  ignore_errors: true
+
+- name: "Delete Velero CRDs"
+  kubernetes.core.k8s:
+    state: absent
+    api_version: apiextensions.k8s.io/v1
+    kind: CustomResourceDefinition
+    label_selectors:
+      - "component=velero"
+  environment:
+    KUBECONFIG: "{{ playbook_dir }}/files/{{ inventory_hostname }}.conf"
+  delegate_to: localhost
+  ignore_errors: true
+
+- name: "Debug results"
+  debug:
+    var: result
+  delegate_to: localhost
+  when: result is defined
+
+# ==========================================
+# Cleanup
+# ==========================================
+- name: Velero - Cleanup temporary files
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "{{ velero.velero_path_bin }}/velero"
+    - "{{ playbook_dir }}/files/velero"
+  delegate_to: localhost
+  run_once: true
+  become: true
